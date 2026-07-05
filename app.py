@@ -7,6 +7,20 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from markets import (
+    MARKET_CSE,
+    MARKET_CONFIGS,
+    MARKET_OPTIONS,
+    MARKET_US,
+    format_money,
+    money_hover_format,
+    money_x_hover_format,
+    normalize_watchlist_key,
+    resolve_security,
+    resolve_watchlist_key,
+    watchlist_label,
+)
+
 from stock_utils import (
     add_indicators,
     build_financial_health,
@@ -25,6 +39,7 @@ from stock_utils import (
 
 
 WATCHLIST_FILE = Path(__file__).with_name("watchlist.json").resolve()
+DEFAULT_WATCHLIST = ["CSE:JKH.N0000", "CSE:COMB.N0000", "US:AAPL"]
 
 
 st.set_page_config(page_title="Stock Scope", page_icon="📈", layout="wide")
@@ -112,24 +127,28 @@ def load_watchlist() -> list[str]:
         try:
             raw = json.loads(WATCHLIST_FILE.read_text(encoding="utf-8"))
             if isinstance(raw, list):
-                return sorted({str(item).strip().upper() for item in raw if str(item).strip()})
+                normalized: list[str] = []
+                for item in raw:
+                    try:
+                        normalized.append(normalize_watchlist_key(str(item)))
+                    except ValueError:
+                        continue
+                if normalized:
+                    return sorted(set(normalized))
         except Exception:
             pass
-    return ["AAPL", "MSFT", "NVDA"]
+    return DEFAULT_WATCHLIST.copy()
 
 
 def save_watchlist(watchlist: list[str]) -> None:
     WATCHLIST_FILE.write_text(json.dumps(sorted(set(watchlist)), indent=2), encoding="utf-8")
 
 
-def format_currency(value: float | None) -> str:
-    if value is None:
-        return "Not available"
-    if abs(value) >= 1_000_000_000:
-        return f"${value / 1_000_000_000:.1f}B"
-    if abs(value) >= 1_000_000:
-        return f"${value / 1_000_000:.1f}M"
-    return f"${value:,.2f}"
+def display_company_name(company: dict, security) -> str:
+    provider_name = str(company.get("name") or "").strip()
+    if provider_name and provider_name.upper() != security.provider_symbol.upper():
+        return provider_name
+    return security.company_name
 
 
 def make_status_chip(label: str, tone: str = "blue") -> str:

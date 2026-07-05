@@ -9,6 +9,8 @@ import yfinance as yf
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
+from markets import format_money
+
 
 @dataclass
 class PredictionResult:
@@ -236,14 +238,10 @@ def _format_ratio(value: float | None) -> str:
     return f"{value:.2f}"
 
 
-def _format_currency(value: float | None) -> str:
+def _format_currency(value: float | None, currency_code: str = "USD") -> str:
     if value is None:
         return "Not available"
-    if abs(value) >= 1_000_000_000:
-        return f"${value / 1_000_000_000:.1f}B"
-    if abs(value) >= 1_000_000:
-        return f"${value / 1_000_000:.1f}M"
-    return f"${value:,.2f}"
+    return format_money(value, currency_code, compact=True)
 
 
 def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
@@ -400,7 +398,7 @@ def compare_with_benchmark(stock_data: pd.DataFrame, benchmark_data: pd.DataFram
     )
 
 
-def build_financial_health(info: dict[str, Any]) -> FinancialHealthResult:
+def build_financial_health(info: dict[str, Any], currency_code: str = "USD") -> FinancialHealthResult:
     current_ratio = _safe_float(info.get("currentRatio"))
     debt_to_equity = _safe_float(info.get("debtToEquity"))
     operating_margin = _safe_float(info.get("operatingMargins"))
@@ -434,7 +432,7 @@ def build_financial_health(info: dict[str, Any]) -> FinancialHealthResult:
         "Operating margin": _format_percent(operating_margin * 100 if operating_margin is not None else None),
         "Profit margin": _format_percent(profit_margin * 100 if profit_margin is not None else None),
         "Returns on assets": _format_percent(return_on_assets * 100 if return_on_assets is not None else None),
-        "Free cash flow": _format_currency(free_cashflow),
+        "Free cash flow": _format_currency(free_cashflow, currency_code),
     }
 
     return FinancialHealthResult(label=label, score=score / 6, explanation=explanation, metrics=metrics)
@@ -533,7 +531,7 @@ def build_risk_snapshot(data: pd.DataFrame, info: dict[str, Any]) -> RiskResult:
     return RiskResult(label=label, score=score / 4, explanation=explanation, metrics=metrics)
 
 
-def build_scenario_projection(data: pd.DataFrame, forecast: PredictionResult) -> ScenarioResult:
+def build_scenario_projection(data: pd.DataFrame, forecast: PredictionResult, currency_code: str = "USD") -> ScenarioResult:
     base_path = pd.DataFrame({"Date": pd.to_datetime(forecast.forecast_dates), "Base": forecast.forecast_values})
     daily_volatility = float(data["Close"].pct_change().dropna().std()) if len(data) > 1 else 0.0
     if daily_volatility == 0:
@@ -549,9 +547,9 @@ def build_scenario_projection(data: pd.DataFrame, forecast: PredictionResult) ->
     bear_path["Bear"] = base_path["Base"] * (1 - spread)
 
     summary = {
-        "bull": f"If the trend improves, the stock could reach about {bull_path['Bull'].iloc[-1]:.2f}.",
-        "base": f"The middle path suggests about {base_path['Base'].iloc[-1]:.2f}.",
-        "bear": f"If conditions weaken, the stock could slip toward {bear_path['Bear'].iloc[-1]:.2f}.",
+        "bull": f"If the trend improves, the stock could reach about {format_money(bull_path['Bull'].iloc[-1], currency_code)}.",
+        "base": f"The middle path suggests about {format_money(base_path['Base'].iloc[-1], currency_code)}.",
+        "bear": f"If conditions weaken, the stock could slip toward {format_money(bear_path['Bear'].iloc[-1], currency_code)}.",
     }
 
     return ScenarioResult(
