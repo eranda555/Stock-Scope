@@ -24,17 +24,23 @@ from markets import (
     watchlist_label,
 )
 
-from cse_data import CSE_DIRECTORY, STATUS_LABELS, fetch_live_trade_summary as _raw_fetch_live_trade_summary
-
-
-@st.cache_data(ttl=60, show_spinner=False)
-def _cached_fetch_live_trade_summary() -> tuple[list[dict], dict]:
-    """Cached wrapper for fetch_live_trade_summary.
-
-    Calls the CSE API at most once every 60 seconds regardless of how
-    many times Streamlit reruns.
-    """
-    return _raw_fetch_live_trade_summary()
+from cse_data import CSE_DIRECTORY, STATUS_LABELS, fetch_live_company_info, fetch_live_trade_summary
+from market_data_manager import CseMarketDataManager
+from market_status import (
+    SLST,
+    TRADING_HOURS_CONFIG,
+    format_slst_date,
+    format_slst_time,
+    get_cse_market_status,
+    get_data_freshness_status,
+    get_market_session,
+    get_market_status_label,
+    get_next_market_open,
+    get_refresh_interval_seconds,
+    get_slst_now,
+    get_time_until_status_change,
+    is_cse_market_open,
+)
 
 from stock_utils import (
     _format_currency,
@@ -446,8 +452,15 @@ def cached_company_profile(market: str, ticker: str) -> dict:
     return provider.load_company_profile(ticker)
 
 
-@st.cache_data(show_spinner=False)
-def cached_company_info(market: str, ticker: str) -> dict:
+@st.cache_data(ttl=120, show_spinner=False)
+def cached_company_info(market: str, ticker: str, _version: int = 0) -> dict:
+    """Cached company info with 120-second TTL and version-based cache busting.
+
+    The ``_version`` parameter acts as a manual cache-buster — when the
+    "Refresh Market Data" button increments ``st.session_state._data_version``,
+    the cached value is automatically invalidated and re-fetched on the next
+    script run.
+    """
     provider = get_provider(market)
     return provider.load_company_info(ticker)
 
@@ -471,7 +484,7 @@ def cached_forecast_prices(data: pd.DataFrame, days: int) -> object:
     return forecast_prices(data, days=days)
 
 
-@st.cache_data(ttl=3600, show_spinner="Analyzing CSE stocks for risk ranking...")
+@st.cache_data(ttl=600, show_spinner="Analyzing CSE stocks for risk ranking...")
 def _cached_risk_ranking(horizon_days: int) -> list[dict]:
     """Rank ALL CSE trading stocks by risk score (cache-friendly, no progress).
 
@@ -515,6 +528,12 @@ if "risk_ranking_summary" not in st.session_state:
     st.session_state.risk_ranking_summary = None
 if "risk_selected_ticker" not in st.session_state:
     st.session_state.risk_selected_ticker = None
+if "_data_version" not in st.session_state:
+    st.session_state._data_version = 0
+if "_market_data_manager_initialized" not in st.session_state:
+    # Pre-warm the market data manager on first load
+    CseMarketDataManager.get_instance().refresh_if_needed()
+    st.session_state._market_data_manager_initialized = True
 
 
 with st.sidebar:
@@ -649,83 +668,234 @@ with st.container(border=True):
                 st.error(str(e))
 
 
-# ── CSE Market Overview ──────────────────────────────────────────────────
+# ── CSE Market Overview (with live data manager) ─────────────────────────
 if selected_market == MARKET_CSE:
-    try:
-        companies_live, market_summery = _cached_fetch_live_trade_summary()
-        trading = [c for c in companies_live if c.get("status") == 0]
-        advancers = [c for c in trading if (c.get("change") or 0) > 0]
-        decliners = [c for c in trading if (c.get("change") or 0) < 0]
+    manager = CseMarketDataManager.get_instance()
 
-        total_market_cap = sum(c.get("marketCap") or 0 for c in trading)
-        total_volume = sum(c.get("sharevolume") or 0 for c in trading)
-        total_turnover = sum(c.get("turnover") or 0 for c in trading)
+    # Auto-refresh if stale
+    if manager.is_stale():
+        with st.spinner("Refreshing market data..."):
+            manager.refresh_if_needed()
 
-        with st.expander("📊 CSE Market Overview", expanded=True):
-            # Key metrics row
-            k1, k2, k3, k4, k5 = st.columns(5)
-            k1.metric("Companies Trading", f"{len(trading):,}")
-            k2.metric("Advancers / Decliners", f"{len(advancers)} / {len(decliners)}")
-            k3.metric("Total Volume", f"{total_volume:,.0f}")
-            k4.metric("Market Cap", f"LKR {total_market_cap / 1e9:.2f}B")
-            k5.metric("Turnover", f"LKR {total_turnover / 1e6:.1f}M")
+    data = manager.get_cached_market_data()
+    display = manager.get_data_display_status()
+    companies_live = data.get("companies", [])
+    market_summery = data.get("market_summary", {})
+    source_available = display["source_available"]
+    fetch_error = display["fetch_error"]
 
-            # Top movers
-            sorted_gainers = sorted(trading, key=lambda c: -(c.get("percentageChange") or 0))[:10]
-            sorted_losers = sorted(trading, key=lambda c: (c.get("percentageChange") or 0))[:10]
-            sorted_active = sorted(trading, key=lambda c: -(c.get("sharevolume") or 0))[:10]
+    trading = [c for c in companies_live if c.get("status") == 0]
+    advancers = [c for c in trading if (c.get("change") or 0) > 0]
+    decliners = [c for c in trading if (c.get("change") or 0) < 0]
 
-            t1, t2, t3 = st.columns(3)
-            with t1:
-                st.markdown("**Top Gainers**")
-                st.dataframe(
-                    pd.DataFrame([
-                        {
-                            "Symbol": c["symbol"],
-                            "Price": c.get("price"),
-                            "Chg %": c.get("percentageChange"),
-                        } for c in sorted_gainers
-                    ]).style.format({
-                        "Price": "{:.2f}",
-                        "Chg %": "{:+.2f}%",
-                    }, subset=["Price", "Chg %"]),
-                    hide_index=True,
-                    width="stretch",
-                )
-            with t2:
-                st.markdown("**Top Losers**")
-                st.dataframe(
-                    pd.DataFrame([
-                        {
-                            "Symbol": c["symbol"],
-                            "Price": c.get("price"),
-                            "Chg %": c.get("percentageChange"),
-                        } for c in sorted_losers
-                    ]).style.format({
-                        "Price": "{:.2f}",
-                        "Chg %": "{:+.2f}%",
-                    }, subset=["Price", "Chg %"]),
-                    hide_index=True,
-                    width="stretch",
-                )
-            with t3:
-                st.markdown("**Most Active**")
-                st.dataframe(
-                    pd.DataFrame([
-                        {
-                            "Symbol": c["symbol"],
-                            "Price": c.get("price"),
-                            "Volume": c.get("sharevolume"),
-                        } for c in sorted_active
-                    ]).style.format({
-                        "Price": "{:.2f}",
-                        "Volume": "{:,.0f}",
-                    }, subset=["Price", "Volume"]),
-                    hide_index=True,
-                    width="stretch",
-                )
-    except Exception as e:
-        st.warning(f"Market overview unavailable: {e}")
+    total_market_cap = sum(c.get("marketCap") or 0 for c in trading)
+    total_volume = sum(c.get("sharevolume") or 0 for c in trading)
+    total_turnover = sum(c.get("turnover") or 0 for c in trading)
+
+    # ── Market status bar (rich status + countdown + freshness) ──────────
+    _now = get_slst_now()
+    _session = get_market_session(_now)
+    _session_label = get_market_status_label(_session)
+    _next_transition = get_time_until_status_change(_now)
+    _freshness = get_data_freshness_status(data)
+    _freshness_label = _freshness["label"]
+    _freshness_color = _freshness["color"]
+
+    # Determine icon and tone for the session
+    if _session == "OPEN":
+        _icon = "🟢"
+        _tone = "green"
+        _header = f"CSE MARKET OPEN"
+        _summary_parts = [
+            f"Current time: {format_slst_time(_now)}",
+            f"Closes at: {format_slst_time(datetime.datetime.combine(_now.date(), TRADING_HOURS_CONFIG['close_time'], tzinfo=SLST))}",
+            f"{_next_transition}",
+        ]
+        if _freshness_label == "LIVE":
+            _summary_parts.append(f"Data: {_freshness_label}")
+        elif _freshness_label in ("DELAYED", "STALE"):
+            _summary_parts.append(f"Data: {_freshness_label}")
+        _freshness_detail = (
+            f"Last updated: {_freshness['fetched_time']}"
+            if _freshness["fetched_time"]
+            else f"Last updated: {display.get('last_updated', 'Never')}"
+        )
+        _summary_parts.append(_freshness_detail)
+        _summary = " | ".join(_summary_parts)
+    elif _session == "PRE_OPEN":
+        _icon = "🟡"
+        _tone = "amber"
+        _header = "CSE PRE-OPEN SESSION"
+        _summary_parts = [
+            f"Current time: {format_slst_time(_now)}",
+            f"{_next_transition}",
+        ]
+        _summary = " | ".join(_summary_parts)
+    elif _session == "WEEKEND":
+        _icon = "⚫"
+        _tone = "grey"
+        _header = "CSE MARKET CLOSED — WEEKEND"
+        _next_open = get_next_market_open(_now)
+        _next_info = format_slst_date(_next_open) if _next_open else "N/A"
+        _summary_parts = [
+            f"Current time: {format_slst_time(_now)}",
+            f"Next opening: {_next_info}",
+            f"{_next_transition}",
+        ]
+        _summary = " | ".join(_summary_parts)
+    elif _session == "MARKET_HOLIDAY":
+        _icon = "🔴"
+        _tone = "red"
+        _header = "CSE MARKET CLOSED — MARKET HOLIDAY"
+        _next_open = get_next_market_open(_now)
+        _next_info = format_slst_date(_next_open) if _next_open else "N/A"
+        _summary_parts = [
+            f"Current time: {format_slst_time(_now)}",
+            f"Next opening: {_next_info}",
+            f"{_next_transition}",
+        ]
+        _summary = " | ".join(_summary_parts)
+    elif _session == "UNKNOWN":
+        _icon = "⚪"
+        _tone = "grey"
+        _header = "CSE MARKET STATUS — UNKNOWN"
+        _summary = f"Current time: {format_slst_time(_now)} | Status could not be determined"
+    else:
+        # CLOSED during trading week
+        _icon = "🔴"
+        _tone = "red"
+        _header = "CSE MARKET CLOSED"
+        _next_open = get_next_market_open(_now)
+        _next_info = format_slst_date(_next_open) if _next_open else "N/A"
+        _summary_parts = [
+            f"Current time: {format_slst_time(_now)}",
+            f"Next opening: {_next_info}",
+            f"{_next_transition}",
+        ]
+        if display.get("last_updated"):
+            _summary_parts.append(f"Last data: {display.get('last_updated', '')}")
+        _summary = " | ".join(_summary_parts)
+
+    # Render the status bar
+    status_col1, status_col2, status_col3, status_col4 = st.columns([2.2, 2.5, 1.8, 1.5])
+
+    with status_col1:
+        st.markdown(
+            f"""
+            <div style="display:flex; flex-direction:column; gap:2px;">
+                <div>
+                    <span class="status-chip {_tone}">{_icon} {_header}</span>
+                </div>
+                <div style="font-size:0.80rem; color:#475569; line-height:1.4;">
+                    {_summary}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with status_col2:
+        # Data freshness label
+        _freshness_chip_tone = {
+            "green": "green",
+            "amber": "amber",
+            "red": "red",
+            "grey": "grey",
+            "blue": "blue",
+        }.get(_freshness_color, "grey")
+        st.markdown(
+            f"""
+            <div style="display:flex; flex-direction:column; gap:2px;">
+                <div>
+                    <span class="status-chip {_freshness_chip_tone}">{_freshness_label}</span>
+                </div>
+                <div style="font-size:0.80rem; color:#64748b;">
+                    Age: {_freshness['age_seconds']}s
+                    {' | Source: ' + _freshness['source_timestamp'] if _freshness['source_timestamp'] != 'Never' else ''}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with status_col3:
+        if not source_available:
+            st.warning("CSE API unavailable — showing last valid data", icon="⚠️")
+        elif fetch_error:
+            st.caption(f"Note: {fetch_error}")
+
+    with status_col4:
+        if st.button("🔄 Refresh", type="secondary", use_container_width=True):
+            with st.spinner("Fetching latest CSE data..."):
+                manager.force_refresh()
+                # Bump version to invalidate cached company_info for the stock view
+                st.session_state._data_version += 1
+            st.rerun()
+
+    # ── Market overview expander ─────────────────────────────────────────
+    with st.expander("📊 CSE Market Overview", expanded=True):
+        # Key metrics row
+        k1, k2, k3, k4, k5 = st.columns(5)
+        k1.metric("Companies Trading", f"{len(trading):,}")
+        k2.metric("Advancers / Decliners", f"{len(advancers)} / {len(decliners)}")
+        k3.metric("Total Volume", f"{total_volume:,.0f}")
+        k4.metric("Market Cap", f"LKR {total_market_cap / 1e9:.2f}B")
+        k5.metric("Turnover", f"LKR {total_turnover / 1e6:.1f}M")
+
+        # Top movers
+        sorted_gainers = sorted(trading, key=lambda c: -(c.get("percentageChange") or 0))[:10]
+        sorted_losers = sorted(trading, key=lambda c: (c.get("percentageChange") or 0))[:10]
+        sorted_active = sorted(trading, key=lambda c: -(c.get("sharevolume") or 0))[:10]
+
+        t1, t2, t3 = st.columns(3)
+        with t1:
+            st.markdown("**Top Gainers**")
+            st.dataframe(
+                pd.DataFrame([
+                    {
+                        "Symbol": c["symbol"],
+                        "Price": c.get("price"),
+                        "Chg %": c.get("percentageChange"),
+                    } for c in sorted_gainers
+                ]).style.format({
+                    "Price": "{:.2f}",
+                    "Chg %": "{:+.2f}%",
+                }, subset=["Price", "Chg %"]),
+                hide_index=True,
+                width="stretch",
+            )
+        with t2:
+            st.markdown("**Top Losers**")
+            st.dataframe(
+                pd.DataFrame([
+                    {
+                        "Symbol": c["symbol"],
+                        "Price": c.get("price"),
+                        "Chg %": c.get("percentageChange"),
+                    } for c in sorted_losers
+                ]).style.format({
+                    "Price": "{:.2f}",
+                    "Chg %": "{:+.2f}%",
+                }, subset=["Price", "Chg %"]),
+                hide_index=True,
+                width="stretch",
+            )
+        with t3:
+            st.markdown("**Most Active**")
+            st.dataframe(
+                pd.DataFrame([
+                    {
+                        "Symbol": c["symbol"],
+                        "Price": c.get("price"),
+                        "Volume": c.get("sharevolume"),
+                    } for c in sorted_active
+                ]).style.format({
+                    "Price": "{:.2f}",
+                    "Volume": "{:,.0f}",
+                }, subset=["Price", "Volume"]),
+                hide_index=True,
+                width="stretch",
+            )
 
 
 security = st.session_state.resolved_security
@@ -747,7 +917,7 @@ else:
             data = add_indicators(raw_data)
             stats = summarize(data)
             company = cached_company_profile(security.market, fetch_ticker)
-            company_info = cached_company_info(security.market, fetch_ticker)
+            company_info = cached_company_info(security.market, fetch_ticker, st.session_state._data_version)
             news = cached_company_news(security.market, fetch_ticker)
             health = build_financial_health(company_info, currency_code=currency_code)
             valuation = build_valuation_snapshot(company_info, current_price=stats["latest_close"])
@@ -882,8 +1052,23 @@ else:
             else "blue" if risk.label == "Data unavailable"
             else "red"
         )
+        # Determine data freshness for price display
+        if security.market == MARKET_CSE:
+            cse_info = company_info
+            cse_ltp = cse_info.get("cse_last_traded_price")
+            price_source = "CSE Live" if cse_ltp else "Delayed (yfinance)"
+            price_freshness = (
+                f"{price_prefix}{stats['latest_close']:.2f}"
+                if not cse_ltp
+                else f"{price_prefix}{stats['latest_close']:.2f} ({price_source})"
+            )
+            price_note = f"Latest market price. Source: {price_source}"
+        else:
+            price_freshness = f"{price_prefix}{stats['latest_close']:.2f}"
+            price_note = "The latest market price."
+
         summary_metrics = [
-            ("Price", f"{price_prefix}{stats['latest_close']:.2f}", "The latest market price.", "blue"),
+            ("Price", price_freshness, price_note, "blue"),
             ("Health", health.label, health.explanation, health_tone),
             ("Value", valuation.label, valuation.explanation, valuation_tone),
             ("Risk", risk.label, risk.explanation, risk_tone),
