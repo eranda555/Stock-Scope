@@ -7,6 +7,7 @@ This keeps the app layer agnostic of provider-specific symbol formats.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+import json
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -85,15 +86,6 @@ class CseProvider(BaseProvider):
     for enhanced company information (real-time prices, detailed stats).
     """
 
-    def __init__(self) -> None:
-        self._session: requests.Session | None = None
-
-    @property
-    def session(self):
-        if self._session is None:
-            self._session = requests.Session()
-        return self._session
-
     def name(self) -> str:
         return "CSE API + yfinance"
 
@@ -109,10 +101,10 @@ class CseProvider(BaseProvider):
 
     def _cse_api_post(self, endpoint: str, data: dict | None = None) -> dict | list:
         try:
-            r = self.session.post(CSE_API_BASE + endpoint, data=data, timeout=10)
+            r = requests.post(CSE_API_BASE + endpoint, data=data, timeout=10)
             r.raise_for_status()
             return r.json()
-        except requests.RequestException:
+        except (requests.RequestException, json.JSONDecodeError, ValueError):
             return {}
 
     def _get_cse_symbol(self, ticker: str) -> str:

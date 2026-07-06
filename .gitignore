@@ -8,3 +8,4 @@ local_cache*
 temp*
 .streamlit/secrets.toml
 watchlist.json
+_test_*.py

@@ -22,7 +22,13 @@ STATUS_LABELS = {
 def _load_cse_data() -> dict[str, Any]:
     if not CSE_DATA_FILE.exists():
         return {"companies": [], "sectors": {}, "count": 0}
-    return json.loads(CSE_DATA_FILE.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(CSE_DATA_FILE.read_text(encoding="utf-8"))
+        if isinstance(data, dict) and "companies" in data:
+            return data
+        return {"companies": [], "sectors": {}, "count": 0}
+    except (json.JSONDecodeError, ValueError, Exception):
+        return {"companies": [], "sectors": {}, "count": 0}
 
 
 class CseDirectory:
