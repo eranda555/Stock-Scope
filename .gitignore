@@ -1,4 +1,10 @@
 .venv/
 __pycache__/
 *.pyc
+.env
+*.key
+secrets*
+local_cache*
+temp*
+.streamlit/secrets.toml
 watchlist.json

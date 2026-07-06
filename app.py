@@ -13,13 +13,28 @@ from markets import (
     MARKET_OPTIONS,
     MARKET_US,
     format_money,
+    get_cse_autocomplete_options,
+    market_label,
     money_hover_format,
     money_x_hover_format,
     normalize_watchlist_key,
+    parse_cse_autocomplete_selection,
     resolve_security,
     resolve_watchlist_key,
     watchlist_label,
 )
+
+from cse_data import STATUS_LABELS, fetch_live_trade_summary as _raw_fetch_live_trade_summary
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def _cached_fetch_live_trade_summary() -> tuple[list[dict], dict]:
+    """Cached wrapper for fetch_live_trade_summary.
+
+    Calls the CSE API at most once every 60 seconds regardless of how
+    many times Streamlit reruns.
+    """
+    return _raw_fetch_live_trade_summary()
 
 from stock_utils import (
     add_indicators,
@@ -29,6 +44,7 @@ from stock_utils import (
     build_valuation_snapshot,
     compare_with_benchmark,
     forecast_prices,
+    get_provider,
     load_company_info,
     load_company_news,
     load_company_profile,
@@ -39,7 +55,7 @@ from stock_utils import (
 
 
 WATCHLIST_FILE = Path(__file__).with_name("watchlist.json").resolve()
-DEFAULT_WATCHLIST = ["CSE:JKH.N0000", "CSE:COMB.N0000", "US:AAPL"]
+DEFAULT_WATCHLIST = ["CSE:JKH.N0000", "CSE:COMB.N0000", "CSE:LOLC.N0000", "US:AAPL"]
 
 
 st.set_page_config(page_title="Stock Scope", page_icon="📈", layout="wide")
@@ -285,35 +301,36 @@ def answer_market_assistant(question: str, context: dict[str, object]) -> str:
     )
 
 
-def cached_price_history(ticker: str, period: str) -> pd.DataFrame:
-    return load_price_history(ticker, period=period).copy()
+@st.cache_data(show_spinner=False)
+def cached_company_profile(market: str, ticker: str) -> dict:
+    provider = get_provider(market)
+    return provider.load_company_profile(ticker)
 
 
 @st.cache_data(show_spinner=False)
-def cached_company_profile(ticker: str) -> dict:
-    return load_company_profile(ticker)
+def cached_company_info(market: str, ticker: str) -> dict:
+    provider = get_provider(market)
+    return provider.load_company_info(ticker)
 
 
 @st.cache_data(show_spinner=False)
-def cached_company_info(ticker: str) -> dict:
-    return load_company_info(ticker)
-
-
-@st.cache_data(show_spinner=False)
-def cached_company_news(ticker: str) -> object:
-    return load_company_news(ticker)
+def cached_company_news(market: str, ticker: str) -> object:
+    provider = get_provider(market)
+    return provider.load_company_news(ticker)
 
 
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = load_watchlist()
-if "search_ticker" not in st.session_state:
-    st.session_state.search_ticker = "AAPL"
-if "analysis_ticker" not in st.session_state:
-    st.session_state.analysis_ticker = None
+if "search_query" not in st.session_state:
+    st.session_state.search_query = "JKH"
+if "selected_market" not in st.session_state:
+    st.session_state.selected_market = "CSE"
+if "resolved_security" not in st.session_state:
+    st.session_state.resolved_security = None
 if "assistant_messages" not in st.session_state:
     st.session_state.assistant_messages = []
-if "assistant_ticker" not in st.session_state:
-    st.session_state.assistant_ticker = None
+if "assistant_resolved_key" not in st.session_state:
+    st.session_state.assistant_resolved_key = None
 if "assistant_pending_prompt" not in st.session_state:
     st.session_state.assistant_pending_prompt = None
 
@@ -327,32 +344,37 @@ with st.sidebar:
     st.subheader("Watchlist")
     watchlist_choice = st.selectbox(
         "Saved tickers",
-        options=st.session_state.watchlist if st.session_state.watchlist else [st.session_state.search_ticker],
+        options=st.session_state.watchlist if st.session_state.watchlist else [st.session_state.search_query],
         index=0,
+        format_func=watchlist_label,
         help="Load a ticker you have already saved.",
     )
-    load_watchlist_ticker = st.button("Load ticker", use_container_width=True)
-    add_to_watchlist = st.button("Save current ticker", use_container_width=True)
-    remove_from_watchlist = st.button("Remove current ticker", use_container_width=True)
+    load_watchlist_ticker = st.button("Load ticker", width="stretch")
 
+    add_to_watchlist = st.button("Save current ticker", width="stretch")
 
+    remove_from_watchlist = st.button("Remove current ticker", width="stretch")
 if load_watchlist_ticker:
-    st.session_state.search_ticker = watchlist_choice
-    st.session_state.analysis_ticker = watchlist_choice
+    security = resolve_watchlist_key(watchlist_choice)
+    st.session_state.selected_market = security.market
+    st.session_state.search_query = security.display_symbol
+    st.session_state.resolved_security = security
     st.rerun()
 
 
-if add_to_watchlist and st.session_state.search_ticker:
-    if st.session_state.search_ticker not in st.session_state.watchlist:
-        st.session_state.watchlist.append(st.session_state.search_ticker)
+if add_to_watchlist and st.session_state.resolved_security:
+    key = st.session_state.resolved_security.watchlist_key
+    if key not in st.session_state.watchlist:
+        st.session_state.watchlist.append(key)
         save_watchlist(st.session_state.watchlist)
     st.rerun()
 
 
-if remove_from_watchlist and st.session_state.search_ticker:
-    st.session_state.watchlist = [item for item in st.session_state.watchlist if item != st.session_state.search_ticker]
+if remove_from_watchlist and st.session_state.resolved_security:
+    key = st.session_state.resolved_security.watchlist_key
+    st.session_state.watchlist = [item for item in st.session_state.watchlist if item != key]
     if not st.session_state.watchlist:
-        st.session_state.watchlist = ["AAPL", "MSFT", "NVDA"]
+        st.session_state.watchlist = ["CSE:JKH.N0000", "CSE:COMB.N0000", "US:AAPL"]
     save_watchlist(st.session_state.watchlist)
     st.rerun()
 
@@ -375,56 +397,180 @@ st.markdown(
 
 with st.container(border=True):
     st.markdown("### Search a stock")
-    st.caption("Enter a ticker such as AAPL or MSFT, then click Analyze.")
-    with st.form("search_form", clear_on_submit=False):
-        input_col, button_col = st.columns([4, 1])
-        with input_col:
-            ticker_input = st.text_input(
-                "Ticker",
-                value=st.session_state.search_ticker,
-                placeholder="AAPL",
+    st.caption("Select a market, then enter a ticker, symbol, or company name. Click Analyze.")
+    market_col, input_col, button_col = st.columns([1, 3, 1])
+    with market_col:
+        selected_market = st.selectbox(
+            "Market",
+            options=MARKET_OPTIONS,
+            format_func=market_label,
+            index=0 if st.session_state.selected_market == MARKET_CSE else 1,
+            label_visibility="collapsed",
+            key="market_selector",
+        )
+    with input_col:
+        ticker_input = st.text_input(
+            "Ticker",
+            value=st.session_state.search_query,
+            placeholder="JKH or John Keells" if selected_market == MARKET_CSE else "AAPL",
+            label_visibility="collapsed",
+            help="For CSE: type a company name (John Keells), CSE symbol (JKH), or full code (JKH.N0000). For US: type a ticker like AAPL.",
+            key="ticker_input",
+        ).strip()
+
+    # CSE autocomplete: show matching options as user types
+    cse_auto_selection = None
+    if selected_market == MARKET_CSE and len(ticker_input) >= 1:
+        auto_options = get_cse_autocomplete_options(ticker_input)
+        if auto_options:
+            cse_auto_selection = st.selectbox(
+                "Matching companies",
+                options=auto_options,
+                index=0,
                 label_visibility="collapsed",
-                help="Type a public stock ticker, like AAPL for Apple.",
-            ).strip().upper()
-        with button_col:
-            submitted = st.form_submit_button("Analyze", use_container_width=True)
+                key="cse_autocomplete",
+                placeholder="Select from matching companies...",
+            )
+
+    with button_col:
+        submitted = st.button("Analyze", width="stretch", type="primary")
 
     if submitted:
         if not ticker_input:
-            st.error("Please enter a ticker before analyzing.")
+            st.error("Please enter a ticker or company name before analyzing.")
         else:
-            st.session_state.search_ticker = ticker_input
-            st.session_state.analysis_ticker = ticker_input
+            resolved_symbol = ticker_input
+            if cse_auto_selection and selected_market == MARKET_CSE:
+                resolved_symbol = parse_cse_autocomplete_selection(cse_auto_selection)
+            try:
+                security = resolve_security(resolved_symbol, selected_market)
+                st.session_state.selected_market = selected_market
+                st.session_state.search_query = resolved_symbol
+                st.session_state.resolved_security = security
+            except ValueError as e:
+                st.error(str(e))
 
 
-analysis_ticker = st.session_state.analysis_ticker
-
-if not analysis_ticker:
-    st.info("Enter a ticker above to see the dashboard. For a quick start, try AAPL or MSFT.")
-else:
+# ── CSE Market Overview ──────────────────────────────────────────────────
+if selected_market == MARKET_CSE:
     try:
-        with st.spinner(f"Loading market data for {analysis_ticker}..."):
-            raw_data = cached_price_history(analysis_ticker, period)
+        companies_live, market_summery = _cached_fetch_live_trade_summary()
+        trading = [c for c in companies_live if c.get("status") == 0]
+        advancers = [c for c in trading if (c.get("change") or 0) > 0]
+        decliners = [c for c in trading if (c.get("change") or 0) < 0]
+
+        total_market_cap = sum(c.get("marketCap") or 0 for c in trading)
+        total_volume = sum(c.get("sharevolume") or 0 for c in trading)
+        total_turnover = sum(c.get("turnover") or 0 for c in trading)
+
+        with st.expander("📊 CSE Market Overview", expanded=True):
+            # Key metrics row
+            k1, k2, k3, k4, k5 = st.columns(5)
+            k1.metric("Companies Trading", f"{len(trading):,}")
+            k2.metric("Advancers / Decliners", f"{len(advancers)} / {len(decliners)}")
+            k3.metric("Total Volume", f"{total_volume:,.0f}")
+            k4.metric("Market Cap", f"LKR {total_market_cap / 1e9:.2f}B")
+            k5.metric("Turnover", f"LKR {total_turnover / 1e6:.1f}M")
+
+            # Top movers
+            sorted_gainers = sorted(trading, key=lambda c: -(c.get("percentageChange") or 0))[:10]
+            sorted_losers = sorted(trading, key=lambda c: (c.get("percentageChange") or 0))[:10]
+            sorted_active = sorted(trading, key=lambda c: -(c.get("sharevolume") or 0))[:10]
+
+            t1, t2, t3 = st.columns(3)
+            with t1:
+                st.markdown("**Top Gainers**")
+                st.dataframe(
+                    pd.DataFrame([
+                        {
+                            "Symbol": c["symbol"],
+                            "Price": c.get("price"),
+                            "Chg %": c.get("percentageChange"),
+                        } for c in sorted_gainers
+                    ]).style.format({
+                        "Price": "{:.2f}",
+                        "Chg %": "{:+.2f}%",
+                    }, subset=["Price", "Chg %"]),
+                    hide_index=True,
+                    width="stretch",
+                )
+            with t2:
+                st.markdown("**Top Losers**")
+                st.dataframe(
+                    pd.DataFrame([
+                        {
+                            "Symbol": c["symbol"],
+                            "Price": c.get("price"),
+                            "Chg %": c.get("percentageChange"),
+                        } for c in sorted_losers
+                    ]).style.format({
+                        "Price": "{:.2f}",
+                        "Chg %": "{:+.2f}%",
+                    }, subset=["Price", "Chg %"]),
+                    hide_index=True,
+                    width="stretch",
+                )
+            with t3:
+                st.markdown("**Most Active**")
+                st.dataframe(
+                    pd.DataFrame([
+                        {
+                            "Symbol": c["symbol"],
+                            "Price": c.get("price"),
+                            "Volume": c.get("sharevolume"),
+                        } for c in sorted_active
+                    ]).style.format({
+                        "Price": "{:.2f}",
+                        "Volume": "{:,.0f}",
+                    }, subset=["Price", "Volume"]),
+                    hide_index=True,
+                    width="stretch",
+                )
+    except Exception as e:
+        st.warning(f"Market overview unavailable: {e}")
+
+
+security = st.session_state.resolved_security
+
+if security is None:
+    st.info("Select a market and enter a ticker or company name above, then click Analyze. For CSE try 'JKH' or 'John Keells'. For US try 'AAPL'.")
+else:
+    provider = get_provider(security.market)
+    fetch_ticker = security.display_symbol
+    currency_code = security.currency_code
+    display_label = f"{security.company_name} ({security.display_symbol})"
+    price_prefix = "LKR " if currency_code == "LKR" else "$"
+    hover_currency = money_hover_format(currency_code)
+    quick_start_hint = "AAPL or MSFT" if security.market == MARKET_US else "JKH or John Keells"
+
+    try:
+        with st.spinner(f"Loading market data for {display_label}..."):
+            raw_data = provider.load_price_history(fetch_ticker, period)
             data = add_indicators(raw_data)
             stats = summarize(data)
-            company = cached_company_profile(analysis_ticker)
-            company_info = cached_company_info(analysis_ticker)
-            news = cached_company_news(analysis_ticker)
-            health = build_financial_health(company_info)
+            company = cached_company_profile(security.market, fetch_ticker)
+            company_info = cached_company_info(security.market, fetch_ticker)
+            news = cached_company_news(security.market, fetch_ticker)
+            health = build_financial_health(company_info, currency_code=currency_code)
             valuation = build_valuation_snapshot(company_info, current_price=stats["latest_close"])
             risk = build_risk_snapshot(data, company_info)
             forecast = forecast_prices(data, days=forecast_days)
-            scenario = build_scenario_projection(data, forecast)
+            scenario = build_scenario_projection(data, forecast, currency_code=currency_code)
 
             sector = str(company.get("sector") or "Unknown")
-            benchmark_ticker = sector_benchmark_ticker(sector)
             comparison = None
             comparison_error = None
-            try:
-                benchmark_data = cached_price_history(benchmark_ticker, period)
-                comparison = compare_with_benchmark(data, benchmark_data, stock_label=analysis_ticker, benchmark_label=benchmark_ticker)
-            except Exception as benchmark_error:
-                comparison_error = str(benchmark_error)
+            if security.market == MARKET_US:
+                benchmark_ticker = sector_benchmark_ticker(sector)
+                try:
+                    benchmark_provider = get_provider(MARKET_US)
+                    benchmark_data = benchmark_provider.load_price_history(benchmark_ticker, period)
+                    comparison = compare_with_benchmark(data, benchmark_data, stock_label=fetch_ticker, benchmark_label=benchmark_ticker)
+                except Exception as benchmark_error:
+                    comparison_error = str(benchmark_error)
+            else:
+                benchmark_ticker = "CSE All Share"
+                comparison_error = "Sector benchmarks are not available for CSE stocks."
 
         close_series = data["Close"] if "Close" in data.columns else raw_data["Close"]
         latest_row = data.iloc[-1]
@@ -439,7 +585,7 @@ else:
             stats=stats,
             benchmark_available=comparison is not None,
             comparison=comparison,
-            analysis_ticker=analysis_ticker,
+            analysis_ticker=display_label,
         )
         comparison_text = (
             f"Compared with {benchmark_ticker}, the stock has returned {comparison.relative_return_pct:.1f}% more and has a correlation of {comparison.correlation:.2f}."
@@ -447,20 +593,20 @@ else:
             else f"Sector comparison is unavailable right now. {comparison_error or ''}".strip()
         )
 
-        if st.session_state.assistant_ticker != analysis_ticker:
-            st.session_state.assistant_ticker = analysis_ticker
+        if st.session_state.assistant_resolved_key != security.watchlist_key:
+            st.session_state.assistant_resolved_key = security.watchlist_key
             st.session_state.assistant_messages = [
                 {
                     "role": "assistant",
                     "content": (
-                        f"I am ready to help you understand {analysis_ticker}. Ask me about valuation, risk, financial health, technical trend, news sentiment, sector comparison, or scenarios."
+                        f"I am ready to help you understand {display_label}. Ask me about valuation, risk, financial health, technical trend, news sentiment, sector comparison, or scenarios."
                     ),
                 }
             ]
 
         assistant_context = {
-            "ticker": analysis_ticker,
-            "company_name": company.get("name", analysis_ticker),
+            "ticker": display_label,
+            "company_name": company.get("name", display_label),
             "overview_label": analysis_overview["label"],
             "overview_explanation": analysis_overview["explanation"],
             "next_step": analysis_overview["next_step"],
@@ -488,8 +634,8 @@ else:
         st.markdown(
             f"""
             <div style="margin:0.75rem 0 1rem 0;">
-                {make_status_chip(company.get('name', analysis_ticker), 'green')}
-                {make_status_chip(f"Sector: {sector}", 'blue')}
+                {make_status_chip(company.get('name', display_label), 'green')}
+                {make_status_chip(security.market_label, 'blue')}
                 {make_status_chip(f"Benchmark: {benchmark_ticker}", 'amber')}
             </div>
             """,
@@ -518,7 +664,7 @@ else:
 
         summary_columns = st.columns(4)
         summary_metrics = [
-            ("Price", f"${stats['latest_close']:.2f}", "The latest market price.", "blue"),
+            ("Price", f"{price_prefix}{stats['latest_close']:.2f}", "The latest market price.", "blue"),
             ("Health", health.label, health.explanation, "green" if health.label == "Healthy" else "amber" if health.label == "Mixed" else "red"),
             ("Value", valuation.label, valuation.explanation, "green" if valuation.label == "Looks attractive" else "amber" if valuation.label == "Fair value" else "red"),
             ("Risk", risk.label, risk.explanation, "green" if risk.label == "Lower risk" else "amber" if risk.label == "Moderate risk" else "red"),
@@ -547,11 +693,12 @@ else:
                 st.caption("What this means: who the company is and where it sits in the market.")
                 overview_left, overview_right = st.columns([1.15, 0.85])
                 with overview_left:
-                    st.markdown(f"**Company:** {company.get('name', analysis_ticker)}")
+                    st.markdown(f"**Company:** {company.get('name', display_label)}")
+                    st.markdown(f"**Market:** {security.market_label}")
                     st.markdown(f"**Sector:** {sector}")
                     st.markdown(f"**Industry:** {company.get('industry', 'Unknown')}")
                     st.markdown(f"**Country:** {company.get('country', 'Unknown')}")
-                    st.markdown(f"**Market value:** {format_currency(company_info.get('marketCap'))}")
+                    st.markdown(f"**Market value:** {format_money(company_info.get('marketCap'), currency_code)}")
                     if comparison is not None:
                         st.write(
                             f"Compared with {benchmark_ticker}, the stock has returned {comparison.relative_return_pct:.1f}% more over the selected period."
@@ -606,14 +753,14 @@ else:
                         y=["Current price", "Estimated fair value"],
                         orientation="h",
                         marker=dict(color=["#2563eb", "#10b981"]),
-                        text=[f"${valuation.current_price:.2f}", f"${valuation.estimated_fair_value:.2f}"],
+                        text=[f"{price_prefix}{valuation.current_price:.2f}", f"{price_prefix}{valuation.estimated_fair_value:.2f}"],
                         textposition="auto",
-                        hovertemplate="%{y}: $%{x:.2f}<extra></extra>",
+                        hovertemplate="%{y}: " + hover_currency + "<extra></extra>",
                         showlegend=False,
                     )
                 )
                 valuation_chart.update_layout(height=280, margin=dict(l=10, r=10, t=20, b=10), template="plotly_white", yaxis=dict(title=""))
-                st.plotly_chart(valuation_chart, use_container_width=True)
+                st.plotly_chart(valuation_chart, width="stretch")
                 valuation_cols = st.columns(3)
                 for index, (label, value) in enumerate(list(valuation.metrics.items())[:6]):
                     with valuation_cols[index % 3]:
@@ -643,7 +790,7 @@ else:
                         y=close_series,
                         name="Close",
                         line=dict(color="#2563eb", width=2.5),
-                        hovertemplate="%{x|%b %d, %Y}<br>Close: $%{y:.2f}<extra></extra>",
+                        hovertemplate="%{x|%b %d, %Y}<br>Close: " + hover_currency + "<extra></extra>",
                     )
                 )
                 technical_chart.add_trace(
@@ -652,7 +799,7 @@ else:
                         y=data["SMA20"],
                         name="20-day average",
                         line=dict(color="#f59e0b", width=1.7),
-                        hovertemplate="%{x|%b %d, %Y}<br>20-day average: $%{y:.2f}<extra></extra>",
+                        hovertemplate="%{x|%b %d, %Y}<br>20-day average: " + hover_currency + "<extra></extra>",
                     )
                 )
                 technical_chart.add_trace(
@@ -661,7 +808,7 @@ else:
                         y=data["SMA50"],
                         name="50-day average",
                         line=dict(color="#10b981", width=1.7),
-                        hovertemplate="%{x|%b %d, %Y}<br>50-day average: $%{y:.2f}<extra></extra>",
+                        hovertemplate="%{x|%b %d, %Y}<br>50-day average: " + hover_currency + "<extra></extra>",
                     )
                 )
                 technical_chart.update_layout(
@@ -671,7 +818,7 @@ else:
                     hovermode="x unified",
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
                 )
-                st.plotly_chart(technical_chart, use_container_width=True)
+                st.plotly_chart(technical_chart, width="stretch")
                 st.markdown(
                     """
                     <div style="color:#334155;">
@@ -711,7 +858,7 @@ else:
                         y=scenario.bear_path["Bear"],
                         name="Bear",
                         line=dict(color="#ef4444", width=2),
-                        hovertemplate="%{x|%b %d, %Y}<br>Bear: $%{y:.2f}<extra></extra>",
+                        hovertemplate="%{x|%b %d, %Y}<br>Bear: " + hover_currency + "<extra></extra>",
                     )
                 )
                 scenario_chart.add_trace(
@@ -722,7 +869,7 @@ else:
                         line=dict(color="#10b981", width=2),
                         fill="tonexty",
                         fillcolor="rgba(16, 185, 129, 0.10)",
-                        hovertemplate="%{x|%b %d, %Y}<br>Bull: $%{y:.2f}<extra></extra>",
+                        hovertemplate="%{x|%b %d, %Y}<br>Bull: " + hover_currency + "<extra></extra>",
                     )
                 )
                 scenario_chart.add_trace(
@@ -731,7 +878,7 @@ else:
                         y=scenario.base_path["Base"],
                         name="Base",
                         line=dict(color="#2563eb", width=2.5, dash="dot"),
-                        hovertemplate="%{x|%b %d, %Y}<br>Base: $%{y:.2f}<extra></extra>",
+                        hovertemplate="%{x|%b %d, %Y}<br>Base: " + hover_currency + "<extra></extra>",
                     )
                 )
                 scenario_chart.update_layout(
@@ -741,7 +888,7 @@ else:
                     hovermode="x unified",
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
                 )
-                st.plotly_chart(scenario_chart, use_container_width=True)
+                st.plotly_chart(scenario_chart, width="stretch")
 
                 scenario_cols = st.columns(3)
                 scenario_cards = [
@@ -798,14 +945,14 @@ else:
                 ]
                 for column, prompt in zip(quick_questions, quick_prompts):
                     with column:
-                        if st.button(prompt, use_container_width=True, key=f"assistant_{prompt}"):
+                        if st.button(prompt, width="stretch", key=f"assistant_{prompt}"):
                             st.session_state.assistant_pending_prompt = prompt
 
                 for message in st.session_state.assistant_messages:
                     with st.chat_message(message["role"]):
                         st.write(message["content"])
 
-                user_prompt = st.chat_input(f"Ask about {analysis_ticker}...", key=f"assistant_input_{analysis_ticker}")
+                user_prompt = st.chat_input(f"Ask about {display_label}...", key=f"assistant_input_{security.watchlist_key}")
                 prompt_to_answer = user_prompt or st.session_state.assistant_pending_prompt
                 if prompt_to_answer:
                     st.session_state.assistant_pending_prompt = None
@@ -821,8 +968,11 @@ else:
         st.caption("Built with Streamlit, yfinance, Plotly, and simple explanatory scoring for beginner investors.")
 
     except ValueError as error:
-        st.error(f"We could not analyze {analysis_ticker}. {error}")
-        st.info("Try a different ticker such as AAPL, MSFT, NVDA, or TSLA.")
+        st.error(f"We could not analyze {display_label}. {error}")
+        if security.market == MARKET_CSE:
+            st.info("CSE stocks use codes like JKH, COMB, LOLC, or full symbols like JKH.N0000. Use the autocomplete dropdown above to find companies.")
+        else:
+            st.info("Try a different ticker such as AAPL, MSFT, NVDA, or TSLA.")
     except Exception as error:
-        st.error(f"Something went wrong while loading {analysis_ticker}. {error}")
+        st.error(f"Something went wrong while loading {display_label}. {error}")
         st.info("If the ticker is valid but data is unavailable, try again later or choose another stock.")

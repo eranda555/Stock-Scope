@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 import re
+from typing import Any
+
+from cse_data import CSE_DIRECTORY, CseDirectory
 
 
 MARKET_CSE = "CSE"
@@ -30,6 +33,16 @@ class CseSecurity:
     @property
     def provider_symbol(self) -> str:
         return cse_display_to_provider_symbol(self.cse_symbol)
+
+    @classmethod
+    def from_directory_entry(cls, entry: dict) -> CseSecurity:
+        symbol = entry["symbol"]
+        name = entry["name"]
+        security_code = symbol.split(".", 1)[0]
+        name_tokens = re.sub(r"\bPLC\b|\bPLC\.$|\bLIMITED\b|\bLTD\b|\bCOMPANY\b|\bCO\b|\bCORPORATION\b|\bCORP\b|\bHOLDINGS\b|\bGROUP\b|\bINTERNATIONAL\b|\bINTL\b|\bBANK\b", "", name, flags=re.IGNORECASE).strip()
+        name_words = [w for w in name_tokens.replace("&", "").split() if len(w) > 2]
+        aliases = list(dict.fromkeys([name_tokens, security_code] + name_words))
+        return cls(cse_symbol=symbol, company_name=name, aliases=tuple(aliases))
 
 
 @dataclass(frozen=True)
@@ -60,33 +73,16 @@ MARKET_CONFIGS = {
 MARKET_OPTIONS = (MARKET_CSE, MARKET_US)
 
 
-CSE_SECURITIES = (
-    CseSecurity("JKH.N0000", "John Keells Holdings PLC", ("John Keells", "Keells", "JKH")),
-    CseSecurity("COMB.N0000", "Commercial Bank of Ceylon PLC", ("Commercial Bank", "ComBank", "CBC", "COMB")),
-    CseSecurity("HNB.N0000", "Hatton National Bank PLC", ("Hatton National Bank", "HNB")),
-    CseSecurity("SAMP.N0000", "Sampath Bank PLC", ("Sampath", "Sampath Bank", "SAMP")),
-    CseSecurity("NDB.N0000", "National Development Bank PLC", ("NDB", "National Development Bank")),
-    CseSecurity("NTB.N0000", "Nations Trust Bank PLC", ("NTB", "Nations Trust")),
-    CseSecurity("DFCC.N0000", "DFCC Bank PLC", ("DFCC", "DFCC Bank")),
-    CseSecurity("DIAL.N0000", "Dialog Axiata PLC", ("Dialog", "Dialog Axiata", "DIAL")),
-    CseSecurity("SLTL.N0000", "Sri Lanka Telecom PLC", ("Sri Lanka Telecom", "SLT", "SLTL")),
-    CseSecurity("LOLC.N0000", "LOLC Holdings PLC", ("LOLC", "LOLC Holdings")),
-    CseSecurity("CARG.N0000", "Cargills (Ceylon) PLC", ("Cargills", "Cargills Ceylon", "CARG")),
-    CseSecurity("CCS.N0000", "Ceylon Cold Stores PLC", ("Ceylon Cold Stores", "Elephant House", "CCS")),
-    CseSecurity("CTC.N0000", "Ceylon Tobacco Company PLC", ("Ceylon Tobacco", "CTC")),
-    CseSecurity("HAYL.N0000", "Hayleys PLC", ("Hayleys", "HAYL")),
-    CseSecurity("VONE.N0000", "Vallibel One PLC", ("Vallibel One", "VONE")),
-    CseSecurity("SPEN.N0000", "Aitken Spence PLC", ("Aitken Spence", "SPEN")),
-    CseSecurity("LIOC.N0000", "Lanka IOC PLC", ("Lanka IOC", "IOC", "LIOC")),
-    CseSecurity("DIST.N0000", "Distilleries Company of Sri Lanka PLC", ("Distilleries", "DCSL", "DIST")),
-    CseSecurity("RCL.N0000", "Royal Ceramics Lanka PLC", ("Royal Ceramics", "Rocell", "RCL")),
-    CseSecurity("TKYO.N0000", "Tokyo Cement Company (Lanka) PLC", ("Tokyo Cement", "TKYO")),
-    CseSecurity("HHL.N0000", "Hemas Holdings PLC", ("Hemas", "Hemas Holdings", "HHL")),
-    CseSecurity("SUN.N0000", "Sunshine Holdings PLC", ("Sunshine", "Sunshine Holdings", "SUN")),
-    CseSecurity("ACL.N0000", "ACL Cables PLC", ("ACL", "ACL Cables")),
-    CseSecurity("DIPD.N0000", "Dipped Products PLC", ("Dipped Products", "DIPD")),
-    CseSecurity("GRAN.N0000", "Ceylon Grain Elevators PLC", ("Ceylon Grain", "Grain Elevators", "GRAN")),
-)
+def _get_cse_securities() -> tuple[CseSecurity, ...]:
+    if CSE_DIRECTORY.count == 0:
+        return ()
+    securities = []
+    for entry in CSE_DIRECTORY.all_companies(only_trading=True):
+        securities.append(CseSecurity.from_directory_entry(entry))
+    return tuple(securities)
+
+
+CSE_SECURITIES = _get_cse_securities()
 
 
 _CSE_SYMBOL_QUERY_PATTERN = re.compile(r"^[A-Z0-9]{1,8}(?:[.\-\s][A-Z][0-9]{4})?(?:\.CM)?$")
@@ -126,10 +122,23 @@ def _find_cse_catalog_match(query: str) -> CseSecurity | None:
     if not compact_query:
         return None
 
+    # Try exact matches against CSE_SECURITIES first (fast path)
     for security in CSE_SECURITIES:
         if normalized_query in {security.cse_symbol, security.security_code, security.provider_symbol}:
             return security
 
+    # Use CseDirectory.search for fuzzy/partial matching
+    directory_results = CSE_DIRECTORY.search(query, limit=5)
+    if directory_results:
+        top_result = directory_results[0]
+        top_symbol = top_result["symbol"].upper()
+        for security in CSE_SECURITIES:
+            if security.cse_symbol.upper() == top_symbol:
+                return security
+        # If the top result isn't in CSE_SECURITIES (non-trading), create a CseSecurity on the fly
+        return CseSecurity.from_directory_entry(top_result)
+
+    # Fallback: compact matching on CSE_SECURITIES
     for security in CSE_SECURITIES:
         searchable_values = (security.company_name, security.cse_symbol, security.security_code, *security.aliases)
         compact_values = [_compact_text(value) for value in searchable_values]
@@ -224,6 +233,14 @@ def watchlist_label(value: str) -> str:
     if security.company_name == security.display_symbol:
         return f"{security.market}: {security.display_symbol}"
     return f"{security.market}: {security.display_symbol} - {security.company_name}"
+
+
+def get_cse_autocomplete_options(query: str) -> list[str]:
+    return CSE_DIRECTORY.autocomplete_options(query)
+
+
+def parse_cse_autocomplete_selection(selection: str) -> str:
+    return CSE_DIRECTORY.parse_autocomplete_selection(selection)
 
 
 def format_money(value: float | int | None, currency_code: str = "USD", compact: bool = False) -> str:
