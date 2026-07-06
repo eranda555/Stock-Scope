@@ -7,7 +7,6 @@ This keeps the app layer agnostic of provider-specific symbol formats.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-import json
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -86,6 +85,15 @@ class CseProvider(BaseProvider):
     for enhanced company information (real-time prices, detailed stats).
     """
 
+    def __init__(self) -> None:
+        self._session: requests.Session | None = None
+
+    @property
+    def session(self):
+        if self._session is None:
+            self._session = requests.Session()
+        return self._session
+
     def name(self) -> str:
         return "CSE API + yfinance"
 
@@ -101,10 +109,10 @@ class CseProvider(BaseProvider):
 
     def _cse_api_post(self, endpoint: str, data: dict | None = None) -> dict | list:
         try:
-            r = requests.post(CSE_API_BASE + endpoint, data=data, timeout=10)
+            r = self.session.post(CSE_API_BASE + endpoint, data=data, timeout=10)
             r.raise_for_status()
             return r.json()
-        except (requests.RequestException, json.JSONDecodeError, ValueError):
+        except requests.RequestException:
             return {}
 
     def _get_cse_symbol(self, ticker: str) -> str:
@@ -161,43 +169,13 @@ class CseProvider(BaseProvider):
         cse_data = self._cse_api_post("companyInfoSummery", {"symbol": cse_symbol})
         if isinstance(cse_data, dict) and "reqSymbolInfo" in cse_data:
             sym = cse_data["reqSymbolInfo"]
-
-            # Prefer CSE API name when available — yfinance returns corrupted
-            # shortName for many CSE stocks (e.g. "CIND-N0000.CM,0P0000C6N7,343")
-            # and longName is sometimes absent.
-            cse_api_name = sym.get("name", "").strip()
-            if cse_api_name:
-                profile["name"] = cse_api_name
-            else:
-                yf_name = profile.get("name") or ""
-                if self._is_corrupted_name(yf_name):
-                    profile["name"] = ticker
-                else:
-                    profile["name"] = yf_name
-
+            profile["name"] = profile.get("name") or sym.get("name", ticker)
             profile["marketCap"] = profile.get("marketCap") or sym.get("marketCap")
             profile["sector"] = profile.get("sector")
             profile["industry"] = profile.get("industry")
             profile["country"] = profile.get("country", "Sri Lanka")
 
         return profile
-
-    @staticmethod
-    def _is_corrupted_name(name: str) -> bool:
-        """Detect if a company name from Yahoo Finance is corrupted.
-
-        Yahoo returns CSV-like strings for some CSE stocks when longName is
-        unavailable, e.g. "CIND-N0000.CM,0P0000C6N7,343".  These match:
-        - Contains a comma (CSV-like)
-        - Contains ".CM," (Yahoo internal format leaking through)
-        """
-        if not name:
-            return True
-        if "," in name:
-            return True
-        if ".CM," in name:
-            return True
-        return False
 
     def load_company_news(self, ticker: str, limit: int = 6) -> NewsSentimentResult:
         import stock_utils as su

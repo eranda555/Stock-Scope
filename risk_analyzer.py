@@ -8,7 +8,9 @@ All functions are pure calculation logic (no Streamlit dependency).
 
 from __future__ import annotations
 
+import concurrent.futures
 import math
+import time
 from typing import Any
 
 import numpy as np
@@ -162,24 +164,28 @@ def compute_risk_score(
     # --- 4. Financial Health (15%) ------------------------------------------
     try:
         health_result = build_financial_health(company_info_dict)
-        health_raw_score = health_result.score  # 0.0 - 1.0, higher = healthier
-        health_label_raw = health_result.label  # "Healthy", "Mixed", "Watch"
+        health_raw_score = health_result.score  # float or None
+        health_label_raw = health_result.label  # "Healthy", "Mixed", "Watch", or "Data unavailable"
     except Exception:
-        health_raw_score = 0.5
-        health_label_raw = "Mixed"
+        health_raw_score = None
+        health_label_raw = "Data unavailable"
 
-    # Map build_financial_health labels to risk-oriented labels
-    if health_label_raw == "Healthy":
-        financial_health_label = "Strong"
-    elif health_label_raw == "Mixed":
-        financial_health_label = "Fair"
+    if health_raw_score is not None:
+        # Map build_financial_health labels to risk-oriented labels
+        if health_label_raw == "Healthy":
+            financial_health_label = "Strong"
+        elif health_label_raw == "Mixed":
+            financial_health_label = "Fair"
+        else:
+            financial_health_label = "Weak"
+
+        # Invert: healthy company = low risk contribution
+        health_score = (1.0 - health_raw_score) * 15.0
     else:
-        financial_health_label = "Weak"
+        financial_health_label = "Data Unavailable"
+        health_score = 0.0  # No penalty — data simply doesn't exist
 
-    # Invert: healthy company = low risk contribution
-    health_score = (1.0 - health_raw_score) * 15.0
-
-    # Debt risk (more specific: based on debt-to-equity)
+    # Debt risk (more specific: based on debt-to-equity, skip if unavailable)
     debt_to_equity = company_info_dict.get("debtToEquity")
     if debt_to_equity is not None:
         dte = float(debt_to_equity)
@@ -190,7 +196,7 @@ def compute_risk_score(
         else:
             debt_risk_label = "High"
     else:
-        debt_risk_label = "Moderate"
+        debt_risk_label = "Unavailable"
 
     # --- 5. Liquidity Risk (15%) --------------------------------------------
     avg_volume = (
@@ -235,10 +241,21 @@ def compute_risk_score(
     stability_score = min(10.0, (large_negative_freq / 0.10) * 10.0)
 
     # --- Total Score --------------------------------------------------------
-    total_score = (
-        vol_score + dd_score + beta_score + health_score
-        + liquidity_score + stability_score
-    )
+    # When financial health data is unavailable (health_score = 0), we
+    # redistribute the 15% weight proportionally across the other components
+    # to keep the total in the 0-100 range.
+    if health_raw_score is not None:
+        total_score = (
+            vol_score + dd_score + beta_score + health_score
+            + liquidity_score + stability_score
+        )
+    else:
+        # Financial health weight (15%) redistributed:
+        # Volatility 29%, Max Drawdown 24%, Beta 18%, Liquidity 18%, Stability 11%
+        scale = 100.0 / 85.0  # 1.17647 — scales 85 max back to 100
+        base_score = vol_score + dd_score + beta_score + liquidity_score + stability_score
+        total_score = base_score * scale
+
     total_score = max(0.0, min(100.0, total_score))
 
     # Annualised historical return
@@ -458,52 +475,284 @@ def compute_risk_adjusted_score(
 # Signal logic
 # ---------------------------------------------------------------------------
 
-def _compute_signal(
+def compute_signal(
     risk_score: float,
     risk_level: str,
     financial_health: str,
     base_return_pct: float,
-) -> str:
-    """Determine the investment signal for a stock based on its risk and return.
+    volatility: float,
+    beta: float,
+    max_drawdown: float,
+    liquidity_risk: str,
+    historical_return_pct: float,
+) -> dict:
+    """Multi-component investment signal with confidence scoring.
 
-    Rules
-    -----
-    - Risk score 0-30 AND financial health not "Weak"          → ``"Buy"``
-    - Risk score 31-60 AND base return > 0                     → ``"Hold"``
-    - Risk score 61-100 OR financial health "Weak"             → ``"Avoid"``
-    - Everything else                                          → ``"Watch"``
+    Evaluates risk, liquidity, financial strength, and return outlook
+    to produce a 5-tier signal with an auditable confidence score.
+
+    Returns
+    -------
+    dict with keys: signal, confidence, components, data_quality_note
     """
-    # Rule 3 (highest priority): Avoid if high risk OR weak financial health
-    if risk_score > 60 or financial_health == "Weak":
-        return "Avoid"
-    # Rule 1: Buy if low risk and acceptable financial health
-    if risk_score <= 30 and financial_health != "Weak":
-        return "Buy"
-    # Rule 2: Hold if moderate risk with positive return
-    if 31 <= risk_score <= 60 and base_return_pct > 0:
-        return "Hold"
-    # Catch-all: Watch
-    return "Watch"
+    # --- Component scoring ---
+    # 1. Risk
+    if risk_score <= 30:
+        risk_c = "low"
+    elif risk_score <= 60:
+        risk_c = "moderate"
+    else:
+        risk_c = "high"
+
+    # 2. Liquidity
+    if liquidity_risk == "Low":
+        liquidity_c = "good"
+    elif liquidity_risk == "Medium":
+        liquidity_c = "medium"
+    else:
+        liquidity_c = "poor"
+
+    # 3. Financial strength
+    fh = financial_health
+    if fh in ("Strong", "Healthy"):
+        financial_strength_c = "strong"
+    elif fh in ("Fair", "Mixed"):
+        financial_strength_c = "fair"
+    elif fh in ("Weak", "Watch"):
+        financial_strength_c = "weak"
+    else:
+        financial_strength_c = "unavailable"
+
+    # 4. Return outlook
+    if base_return_pct > 5:
+        return_outlook_c = "positive"
+    elif base_return_pct >= -5:
+        return_outlook_c = "neutral"
+    else:
+        return_outlook_c = "negative"
+
+    # --- Signal assignment (rules checked IN ORDER) ---
+    if risk_c == "high" or financial_strength_c == "weak" or return_outlook_c == "negative":
+        signal = "High Caution"
+    elif risk_c == "moderate" and (liquidity_c == "poor" or return_outlook_c == "neutral"):
+        signal = "Caution"
+    elif risk_c == "low" and (return_outlook_c == "positive" or financial_strength_c == "strong"):
+        signal = "Strong Positive"
+    elif risk_c == "low" or (return_outlook_c == "positive" and financial_strength_c != "weak"):
+        signal = "Positive"
+    else:
+        signal = "Neutral"
+
+    # --- Confidence score ---
+    confidence = 1.0
+    if financial_strength_c == "unavailable":
+        confidence -= 0.25
+    # Check for default/zero numeric inputs
+    for val in (risk_score, base_return_pct, volatility, beta, max_drawdown, historical_return_pct):
+        if val == 0:
+            confidence -= 0.1
+    confidence = max(0.2, min(1.0, confidence))
+
+    # --- Data quality note ---
+    if financial_strength_c == "unavailable":
+        data_quality_note = (
+            "Financial health data is not available from public APIs "
+            "for CSE stocks. Signal is based on market-price risk "
+            "components only."
+        )
+    else:
+        data_quality_note = ""
+
+    return {
+        "signal": signal,
+        "confidence": round(confidence, 2),
+        "components": {
+            "risk": risk_c,
+            "liquidity": liquidity_c,
+            "financial_strength": financial_strength_c,
+            "return_outlook": return_outlook_c,
+        },
+        "data_quality_note": data_quality_note,
+    }
 
 
 # ---------------------------------------------------------------------------
 # Main orchestrator: risk ranking table
 # ---------------------------------------------------------------------------
 
+MAX_WORKERS = 8
+PRICE_HISTORY_TIMEOUT = 15  # seconds per stock
+COMPANY_INFO_TIMEOUT = 10  # seconds per stock
+
+
+def _call_with_timeout(func, args=None, kwargs=None, timeout=20):
+    """Call a function with a strict timeout.
+
+    If the call exceeds *timeout* seconds, or raises any exception,
+    ``None`` is returned.  This prevents a single stuck yfinance call
+    from blocking the entire ranking pipeline.
+    """
+    if args is None:
+        args = ()
+    if kwargs is None:
+        kwargs = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(func, *args, **kwargs)
+        try:
+            return future.result(timeout=timeout)
+        except Exception:
+            return None
+
+
+def _process_single_company(
+    company: dict,
+    provider,
+    horizon_days: int,
+    max_retries: int = 2,
+) -> dict | None:
+    """Process one company for the risk ranking table.
+
+    Parameters
+    ----------
+    company : dict
+        Company dict with at least a ``"symbol"`` key.
+    provider : BaseProvider
+        Market data provider.
+    horizon_days : int
+        Number of trading days for scenario projections.
+    max_retries : int
+        Maximum number of retries for price history download
+        (exponential backoff).  Default 2.
+
+    Returns
+    -------
+    dict | None
+        Ranked-stock dict, or ``None`` if the stock could not be processed.
+    """
+    symbol = company["symbol"]
+    name = company.get("name", symbol)
+
+    # --- 1. Price history (with retries & per-call timeout) ---------------
+    price_data = None
+    for attempt in range(max_retries + 1):
+        price_data = _call_with_timeout(
+            provider.load_price_history,
+            (symbol, "5y"),
+            timeout=PRICE_HISTORY_TIMEOUT,
+        )
+        if price_data is not None and not price_data.empty and len(price_data) >= 20:
+            break
+        if attempt < max_retries:
+            time.sleep(2**attempt)  # 1 s, 2 s
+
+    if price_data is None or price_data.empty or len(price_data) < 20:
+        return None
+
+    try:
+        price_data = add_indicators(price_data)
+    except Exception:
+        return None
+
+    # --- 2. Company info (with timeout) -----------------------------------
+    company_info = _call_with_timeout(
+        provider.load_company_info,
+        (symbol,),
+        timeout=COMPANY_INFO_TIMEOUT,
+    )
+    if company_info is None:
+        company_info = {}
+
+    # --- 3. Current price & market cap ------------------------------------
+    current_price = company.get("price")
+    if current_price is None or current_price == 0:
+        current_price = float(price_data["Close"].iloc[-1])
+    else:
+        current_price = float(current_price)
+
+    market_cap = company.get("market_cap")
+    if market_cap is None:
+        market_cap = company_info.get("marketCap")
+    if market_cap is None:
+        market_cap = company_info.get("cse_market_cap")
+    if market_cap is not None:
+        market_cap = float(market_cap)
+
+    # --- 4. Risk score ----------------------------------------------------
+    risk = compute_risk_score(price_data, company_info)
+
+    # --- 5. Scenario prices -----------------------------------------------
+    scenario = compute_scenario_prices(price_data, horizon_days)
+
+    # --- 6. Risk-adjusted score -------------------------------------------
+    risk_adj = compute_risk_adjusted_score(risk, scenario)
+
+    # Format values for output
+    hist_return_pct = risk["historical_return"] * 100
+    bear_return_pct = scenario["bear"]["return"] * 100
+    base_return_pct = scenario["base"]["return"] * 100
+    bull_return_pct = scenario["bull"]["return"] * 100
+
+    signal_result = compute_signal(
+        risk_score=risk["score"],
+        risk_level=risk["level"],
+        financial_health=risk["financial_health"],
+        base_return_pct=base_return_pct,
+        volatility=risk["volatility"],
+        beta=risk["beta"],
+        max_drawdown=risk["max_drawdown"],
+        liquidity_risk=risk["liquidity_risk"],
+        historical_return_pct=hist_return_pct,
+    )
+    signal = signal_result["signal"]
+    signal_confidence = signal_result["confidence"]
+    signal_components = signal_result["components"]
+    data_quality_note = signal_result["data_quality_note"]
+
+    return {
+        "company": name,
+        "ticker": symbol,
+        "sector": "Unknown",
+        "current_price": round(current_price, 2),
+        "market_cap": round(market_cap, 2) if market_cap else 0.0,
+        "risk_score": risk["score"],
+        "risk_level": risk["level"],
+        "volatility": risk["volatility"],
+        "beta": risk["beta"],
+        "max_drawdown": risk["max_drawdown"],
+        "debt_risk": risk["debt_risk"],
+        "liquidity_risk": risk["liquidity_risk"],
+        "financial_health": risk["financial_health"],
+        "historical_return_pct": round(hist_return_pct, 1),
+        "scenario_bear_return_pct": round(bear_return_pct, 1),
+        "scenario_base_return_pct": round(base_return_pct, 1),
+        "scenario_bull_return_pct": round(bull_return_pct, 1),
+        "risk_adjusted_score": risk_adj,
+        "signal": signal,
+        "signal_confidence": signal_confidence,
+        "signal_components": signal_components,
+        "data_quality_note": data_quality_note,
+    }
+
+
 def build_risk_ranking_table(
     trading_companies: list[dict],
     market_data_provider,
     horizon_days: int = 252,
-) -> list[dict]:
+    progress_callback: callable = None,
+) -> tuple[list[dict], int, int]:
     """Build a risk-ranked table for every trading CSE company.
 
     For each company this function:
-    1. Loads price history via the provider.
+    1. Loads price history via the provider (with timeout & retries).
     2. Loads company info (yfinance + CSE API enhancement).
     3. Computes the comprehensive risk score.
     4. Computes Bear / Base / Bull scenario returns.
     5. Computes the risk-adjusted score.
     6. Determines an investment signal.
+
+    All yfinance calls are performed **concurrently** (up to
+    ``MAX_WORKERS`` = 8 parallel downloads) so that ~167 stocks
+    complete in seconds rather than minutes.
 
     Results are sorted by risk score ascending (lowest risk first).
 
@@ -516,100 +765,60 @@ def build_risk_ranking_table(
         and ``load_company_info`` methods will be called.
     horizon_days : int
         Number of trading days for scenario projections (default 252 = 1 year).
+    progress_callback : callable, optional
+        Called after every completed stock as
+        ``progress_callback(current: int, total: int, symbol: str)``.
+        Can be used by the Streamlit layer to drive a progress bar.
 
     Returns
     -------
-    list[dict]
-        Each entry contains rank, company metadata, risk metrics, scenario
-        returns, and investment signal.
+    tuple[list[dict], int, int]
+        ``(results, succeeded_count, failed_count)``.
+        Each result dict contains rank, company metadata, risk metrics,
+        scenario returns, and investment signal.
     """
     results: list[dict] = []
+    succeeded = 0
+    failed = 0
+    total = len(trading_companies)
+    completed = 0
 
-    for company in trading_companies:
-        try:
-            symbol = company["symbol"]
-            name = company.get("name", symbol)
+    if total == 0:
+        return results, 0, 0
 
-            # --- 1. Price history -------------------------------------------
-            try:
-                price_data = market_data_provider.load_price_history(
-                    symbol, period="5y"
-                )
-                if price_data.empty or len(price_data) < 20:
-                    continue
-                price_data = add_indicators(price_data)
-            except Exception:
-                continue
-
-            # --- 2. Company info --------------------------------------------
-            try:
-                company_info = market_data_provider.load_company_info(symbol)
-            except Exception:
-                company_info = {}
-
-            # --- 3. Current price & market cap ------------------------------
-            current_price = company.get("price")
-            if current_price is None or current_price == 0:
-                current_price = float(price_data["Close"].iloc[-1])
-            else:
-                current_price = float(current_price)
-
-            market_cap = company.get("market_cap")
-            if market_cap is None:
-                market_cap = company_info.get("marketCap")
-            if market_cap is None:
-                market_cap = company_info.get("cse_market_cap")
-            if market_cap is not None:
-                market_cap = float(market_cap)
-
-            # --- 4. Risk score ----------------------------------------------
-            risk = compute_risk_score(price_data, company_info)
-
-            # --- 5. Scenario prices -----------------------------------------
-            scenario = compute_scenario_prices(price_data, horizon_days)
-
-            # --- 6. Risk-adjusted score -------------------------------------
-            risk_adj = compute_risk_adjusted_score(risk, scenario)
-
-            # Format values for output
-            hist_return_pct = risk["historical_return"] * 100
-            bear_return_pct = scenario["bear"]["return"] * 100
-            base_return_pct = scenario["base"]["return"] * 100
-            bull_return_pct = scenario["bull"]["return"] * 100
-
-            signal = _compute_signal(
-                risk["score"],
-                risk["level"],
-                risk["financial_health"],
-                base_return_pct,
+    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        # Submit all companies at once — the bounded thread pool prevents
+        # more than MAX_WORKERS concurrent downloads.
+        future_to_company: dict = {}
+        for company in trading_companies:
+            future = executor.submit(
+                _process_single_company, company, market_data_provider, horizon_days
             )
+            future_to_company[future] = company
 
-            results.append(
-                {
-                    "company": name,
-                    "ticker": symbol,
-                    "sector": "Unknown",
-                    "current_price": round(current_price, 2),
-                    "market_cap": round(market_cap, 2) if market_cap else 0.0,
-                    "risk_score": risk["score"],
-                    "risk_level": risk["level"],
-                    "volatility": risk["volatility"],
-                    "beta": risk["beta"],
-                    "max_drawdown": risk["max_drawdown"],
-                    "debt_risk": risk["debt_risk"],
-                    "liquidity_risk": risk["liquidity_risk"],
-                    "financial_health": risk["financial_health"],
-                    "historical_return_pct": round(hist_return_pct, 1),
-                    "scenario_bear_return_pct": round(bear_return_pct, 1),
-                    "scenario_base_return_pct": round(base_return_pct, 1),
-                    "scenario_bull_return_pct": round(bull_return_pct, 1),
-                    "risk_adjusted_score": risk_adj,
-                    "signal": signal,
-                }
-            )
-        except Exception:
-            # Silently skip companies that fail to load or process
-            continue
+        # Collect results as they complete
+        for future in concurrent.futures.as_completed(future_to_company):
+            company = future_to_company[future]
+            try:
+                result = future.result(timeout=PRICE_HISTORY_TIMEOUT + 5)
+                if result is not None:
+                    results.append(result)
+                    succeeded += 1
+                else:
+                    failed += 1
+            except Exception:
+                failed += 1
+
+            completed += 1
+            if progress_callback is not None:
+                try:
+                    progress_callback(completed, total, company.get("symbol", ""))
+                except Exception:
+                    pass
+
+            # Brief pause every batch to avoid hammering Yahoo Finance
+            if completed % MAX_WORKERS == 0:
+                time.sleep(0.1)
 
     # Sort by risk score ascending (lowest risk first)
     results.sort(key=lambda x: x["risk_score"])
@@ -618,7 +827,7 @@ def build_risk_ranking_table(
     for i, entry in enumerate(results, start=1):
         entry["rank"] = i
 
-    return results
+    return results, succeeded, failed
 
 
 # ---------------------------------------------------------------------------

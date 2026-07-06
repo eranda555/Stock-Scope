@@ -9,3 +9,5 @@ temp*
 .streamlit/secrets.toml
 watchlist.json
 _test_*.py
+.risk_ranking_snapshot.json
+_diagnostic*.md

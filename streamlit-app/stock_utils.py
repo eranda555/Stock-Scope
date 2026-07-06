@@ -23,11 +23,7 @@ class PredictionResult:
     forecast_dates: list[str]
     forecast_values: list[float]
     slope: float
-    in_sample_score: float
-    validation_mae: float | None
-    validation_rmse: float | None
-    validation_r2: float | None
-    validation_period: str
+    score: float
 
 
 @dataclass
@@ -51,7 +47,7 @@ class ComparisonResult:
 @dataclass
 class FinancialHealthResult:
     label: str
-    score: float | None  # None when financial data is entirely unavailable
+    score: float
     explanation: str
     metrics: dict[str, str]
 
@@ -59,10 +55,10 @@ class FinancialHealthResult:
 @dataclass
 class ValuationResult:
     label: str
-    score: float | None  # None when valuation data is entirely unavailable
+    score: float
     explanation: str
     current_price: float
-    estimated_fair_value: float | None  # None when valuation data is unavailable
+    estimated_fair_value: float
     upside_pct: float
     metrics: dict[str, str]
 
@@ -205,32 +201,10 @@ def load_price_history(ticker: str, period: str = "5y") -> pd.DataFrame:
     return data
 
 
-def _is_valid_company_name(name: str | None) -> bool:
-    """Check if a company name looks like a real name, not corrupted metadata.
-
-    Yahoo Finance can return corrupted shortName for some markets (e.g.
-    "CIND-N0000.CM,0P0000C6N7,343").  Reject names that look like internal
-    formats.
-    """
-    if not name:
-        return False
-    # Comma-separated values indicate CSV leakage
-    if "," in name:
-        return False
-    # Yahoo internal format: contains ".CM,"
-    if ".CM," in name:
-        return False
-    # All-caps with digits and dots suggests a symbol, not a name
-    return True
-
-
 def load_company_profile(ticker: str) -> dict[str, Any]:
     info = load_company_info(ticker)
-    yf_name = info.get("longName") or info.get("shortName") or ""
-    if not _is_valid_company_name(yf_name):
-        yf_name = ticker.upper()
     return {
-        "name": yf_name,
+        "name": info.get("longName") or info.get("shortName") or ticker.upper(),
         "sector": info.get("sector") or "Unknown",
         "industry": info.get("industry") or "Unknown",
         "market_cap": info.get("marketCap"),
@@ -352,61 +326,15 @@ def forecast_prices(data: pd.DataFrame, days: int = 30) -> PredictionResult:
     if len(data) < 60:
         raise ValueError("Need at least 60 rows of data for the indicator-based forecast")
 
-    # ── Chronological split: first 80% train, last 20% validation ──────────
-    split_idx = int(len(data) * 0.8)
-    if split_idx < 60:
-        # Ensure at least 60 training rows even for small datasets
-        split_idx = max(len(data) - 30, 60)
-        if split_idx >= len(data):
-            split_idx = len(data) - 1
-
-    train_data = data.iloc[:split_idx].copy()
-    val_data = data.iloc[split_idx:].copy()
-
-    # ── Train on training split for in-sample + validation metrics ─────────
-    train_frame = _feature_frame(train_data)
-    feature_columns = [c for c in train_frame.columns if c not in {"Date", "Target"}]
-
+    frame = _feature_frame(data)
+    feature_columns = [column for column in frame.columns if column not in {"Date", "Target"}]
     model = LinearRegression()
-    model.fit(train_frame[feature_columns], train_frame["Target"])
-    in_sample_score = float(r2_score(
-        train_frame["Target"],
-        model.predict(train_frame[feature_columns]),
-    ))
+    model.fit(frame[feature_columns], frame["Target"])
+    score = float(r2_score(frame["Target"], model.predict(frame[feature_columns])))
 
-    # ── Validate on held-out validation split ───────────────────────────────
-    val_frame = _feature_frame(val_data)
-    if len(val_frame) > 1:
-        val_features = val_frame[feature_columns]
-        val_targets = val_frame["Target"]
-        val_preds = model.predict(val_features)
-        val_r2 = float(r2_score(val_targets, val_preds))
-        val_mae = float(np.mean(np.abs(val_targets - val_preds)))
-        val_rmse = float(np.sqrt(np.mean((val_targets - val_preds) ** 2)))
-    else:
-        val_r2 = None
-        val_mae = None
-        val_rmse = None
-
-    if len(val_data) > 0:
-        validation_period = (
-            f"{pd.to_datetime(val_data['Date'].iloc[0]).strftime('%Y-%m-%d')}"
-            f" to {pd.to_datetime(val_data['Date'].iloc[-1]).strftime('%Y-%m-%d')}"
-        )
-    else:
-        validation_period = "N/A"
-
-    # ── Retrain on ALL data for the best forecast model ────────────────────
-    full_frame = _feature_frame(data)
-    model.fit(full_frame[feature_columns], full_frame["Target"])
-
-    # ── Recursive forecast ──────────────────────────────────────────────────
     history = data.copy()
     forecast_dates: list[str] = []
     forecast_values: list[float] = []
-
-    # Capture the last real volume once to avoid indicator degradation
-    last_real_volume = float(data["Volume"].iloc[-1]) if "Volume" in data.columns and pd.notna(data["Volume"].iloc[-1]) else 0.0
 
     for _ in range(days):
         enriched_history = add_indicators(history)
@@ -422,7 +350,7 @@ def forecast_prices(data: pd.DataFrame, days: int = 30) -> PredictionResult:
                 "MACD": float(last_row["MACD"]) if pd.notna(last_row["MACD"]) else 0.0,
                 "MACD Signal": float(last_row["MACD Signal"]) if pd.notna(last_row["MACD Signal"]) else 0.0,
                 "MACD Histogram": float(last_row["MACD Histogram"]) if pd.notna(last_row["MACD Histogram"]) else 0.0,
-                "Volume": float(last_row["Volume"]) if pd.notna(last_row.get("Volume")) else last_real_volume,
+                "Volume": float(last_row["Volume"]) if pd.notna(last_row.get("Volume")) else 0.0,
             }
         ])
         predicted_close = float(model.predict(feature_row)[0])
@@ -445,11 +373,7 @@ def forecast_prices(data: pd.DataFrame, days: int = 30) -> PredictionResult:
         forecast_dates=forecast_dates,
         forecast_values=forecast_values,
         slope=float(model.coef_[0]),
-        in_sample_score=in_sample_score,
-        validation_mae=val_mae,
-        validation_rmse=val_rmse,
-        validation_r2=val_r2,
-        validation_period=validation_period,
+        score=score,
     )
 
 
@@ -480,65 +404,7 @@ def compare_with_benchmark(stock_data: pd.DataFrame, benchmark_data: pd.DataFram
     )
 
 
-# ── Data-availability helpers ─────────────────────────────────────────────
-
-_FINANCIAL_HEALTH_KEYS = [
-    "currentRatio", "debtToEquity", "operatingMargins",
-    "profitMargins", "returnOnAssets", "freeCashflow",
-    "revenueGrowth", "earningsGrowth",
-]
-
-_VALUATION_KEYS = [
-    "trailingPE", "forwardPE", "priceToBook",
-    "priceToSalesTrailing12Months", "pegRatio",
-    "trailingEps", "targetMeanPrice",
-]
-
-
-def _has_any_field(info: dict, keys: list[str]) -> bool:
-    """Return True if *info* contains a non-None value for any of *keys*."""
-    return any(info.get(k) is not None for k in keys)
-
-
-def _has_financial_health_data(info: dict) -> bool:
-    """Check whether the info dict has actual financial statement data.
-
-    For CSE stocks, all these fields are None because yfinance does not
-    provide fundamental data for the .CM ticker suffix.
-    """
-    return _has_any_field(info, _FINANCIAL_HEALTH_KEYS)
-
-
-def _has_valuation_data(info: dict) -> bool:
-    """Check whether the info dict has actual valuation/earnings data.
-
-    For CSE stocks, all these fields are None because yfinance does not
-    provide fundamental data for the .CM ticker suffix.
-    """
-    return _has_any_field(info, _VALUATION_KEYS)
-
-
-# ── Financial Health ──────────────────────────────────────────────────────
-
 def build_financial_health(info: dict[str, Any], currency_code: str = "USD") -> FinancialHealthResult:
-    if not _has_financial_health_data(info):
-        return FinancialHealthResult(
-            label="Data unavailable",
-            score=None,
-            explanation=(
-                "Financial statement data is not available from public APIs for CSE stocks. "
-                "Consider reviewing annual reports directly."
-            ),
-            metrics={
-                "Cash cushion": "Data unavailable",
-                "Debt load": "Data unavailable",
-                "Operating margin": "Data unavailable",
-                "Profit margin": "Data unavailable",
-                "Returns on assets": "Data unavailable",
-                "Free cash flow": "Data unavailable",
-            },
-        )
-
     current_ratio = _safe_float(info.get("currentRatio"))
     debt_to_equity = _safe_float(info.get("debtToEquity"))
     operating_margin = _safe_float(info.get("operatingMargins"))
@@ -548,46 +414,18 @@ def build_financial_health(info: dict[str, Any], currency_code: str = "USD") -> 
     earnings_growth = _safe_float(info.get("earningsGrowth"))
     free_cashflow = _safe_float(info.get("freeCashflow"))
 
-    # Score based ONLY on available fields — unavailable fields do NOT count
-    # as failures.  This is critical for stocks that have partial data.
-    available = 0
     score = 0.0
+    score += 1 if current_ratio is not None and current_ratio >= 1.5 else 0
+    score += 1 if debt_to_equity is not None and debt_to_equity <= 150 else 0
+    score += 1 if operating_margin is not None and operating_margin >= 0.15 else 0
+    score += 1 if profit_margin is not None and profit_margin >= 0.10 else 0
+    score += 1 if return_on_assets is not None and return_on_assets >= 0.05 else 0
+    score += 1 if (revenue_growth is not None and revenue_growth > 0) or (earnings_growth is not None and earnings_growth > 0) else 0
 
-    if current_ratio is not None:
-        available += 1
-        score += 1 if current_ratio >= 1.5 else 0
-
-    if debt_to_equity is not None:
-        available += 1
-        score += 1 if debt_to_equity <= 150 else 0
-
-    if operating_margin is not None:
-        available += 1
-        score += 1 if operating_margin >= 0.15 else 0
-
-    if profit_margin is not None:
-        available += 1
-        score += 1 if profit_margin >= 0.10 else 0
-
-    if return_on_assets is not None:
-        available += 1
-        score += 1 if return_on_assets >= 0.05 else 0
-
-    # Growth check: counts as ONE check, available if either field exists
-    if revenue_growth is not None or earnings_growth is not None:
-        available += 1
-        score += 1 if (revenue_growth is not None and revenue_growth > 0) or (earnings_growth is not None and earnings_growth > 0) else 0
-
-    if available == 0:
-        # Safety net — should not happen because _has_financial_health_data passed
-        normalised = 0.0
-    else:
-        normalised = score / available
-
-    if normalised >= 5 / 6:
+    if score >= 5:
         label = "Healthy"
         explanation = "The company looks financially solid, with enough cushion and decent profitability."
-    elif normalised >= 3 / 6:
+    elif score >= 3:
         label = "Mixed"
         explanation = "The company has some strengths, but one or two balance-sheet or profitability checks need attention."
     else:
@@ -603,32 +441,10 @@ def build_financial_health(info: dict[str, Any], currency_code: str = "USD") -> 
         "Free cash flow": _format_currency(free_cashflow, currency_code),
     }
 
-    return FinancialHealthResult(label=label, score=normalised, explanation=explanation, metrics=metrics)
+    return FinancialHealthResult(label=label, score=score / 6, explanation=explanation, metrics=metrics)
 
 
 def build_valuation_snapshot(info: dict[str, Any], current_price: float) -> ValuationResult:
-    if not _has_valuation_data(info):
-        return ValuationResult(
-            label="Data unavailable",
-            score=None,
-            explanation=(
-                "Valuation analysis is not available for CSE stocks through public APIs. "
-                "P/E ratio, P/B ratio, analyst targets, and EPS data require financial "
-                "statements which CSE does not provide through its public API."
-            ),
-            current_price=current_price,
-            estimated_fair_value=None,
-            upside_pct=0.0,
-            metrics={
-                "P/E": "Data unavailable",
-                "Forward P/E": "Data unavailable",
-                "Price / Book": "Data unavailable",
-                "Price / Sales": "Data unavailable",
-                "PEG": "Data unavailable",
-                "Upside to fair value": "Data unavailable",
-            },
-        )
-
     trailing_pe = _safe_float(info.get("trailingPE"))
     forward_pe = _safe_float(info.get("forwardPE"))
     price_to_book = _safe_float(info.get("priceToBook"))
@@ -647,39 +463,17 @@ def build_valuation_snapshot(info: dict[str, Any], current_price: float) -> Valu
 
     upside_pct = ((estimated_fair_value - current_price) / current_price) * 100 if current_price else 0.0
 
-    # Score based ONLY on available valuation fields
-    available = 0
     score = 0.0
-
-    if trailing_pe is not None:
-        available += 1
-        score += 1 if trailing_pe < 20 else 0
-
-    if forward_pe is not None:
-        available += 1
-        score += 1 if forward_pe < 20 else 0
-
-    if peg_ratio is not None:
-        available += 1
-        score += 1 if peg_ratio < 2 else 0
-
-    if price_to_book is not None:
-        available += 1
-        score += 1 if price_to_book < 8 else 0
-
-    # Upside is always available (we fall back to current_price)
-    available += 1
+    score += 1 if trailing_pe is not None and trailing_pe < 20 else 0
+    score += 1 if forward_pe is not None and forward_pe < 20 else 0
+    score += 1 if peg_ratio is not None and peg_ratio < 2 else 0
+    score += 1 if price_to_book is not None and price_to_book < 8 else 0
     score += 1 if upside_pct >= 10 else 0
 
-    if available == 0:
-        normalised = 0.0
-    else:
-        normalised = score / available
-
-    if normalised >= 4 / 5:
+    if score >= 4:
         label = "Looks attractive"
         explanation = "The market price may be below what the business could reasonably be worth."
-    elif normalised >= 2 / 5:
+    elif score >= 2:
         label = "Fair value"
         explanation = "The stock does not look obviously cheap or expensive at the moment."
     else:
@@ -697,7 +491,7 @@ def build_valuation_snapshot(info: dict[str, Any], current_price: float) -> Valu
 
     return ValuationResult(
         label=label,
-        score=normalised,
+        score=score / 5,
         explanation=explanation,
         current_price=current_price,
         estimated_fair_value=estimated_fair_value,
@@ -715,59 +509,32 @@ def build_risk_snapshot(data: pd.DataFrame, info: dict[str, Any]) -> RiskResult:
         drawdown = (data["Close"] / running_high - 1) * 100
         max_drawdown = float(drawdown.min())
     beta = _safe_float(info.get("beta"))
-    # Fallback to CSE API beta
-    if beta is None:
-        beta = _safe_float(info.get("cse_beta"))
     debt_to_equity = _safe_float(info.get("debtToEquity"))
 
-    metric_count = 0
     score = 0.0
-
-    # Volatility — always available from price history
-    metric_count += 1
     score += 1 if volatility < 30 else 0
-
-    # Beta — may be available from yfinance or CSE API
-    if beta is not None:
-        metric_count += 1
-        score += 1 if beta < 1.2 else 0
-
-    # Max drawdown — always available from price history
-    metric_count += 1
+    score += 1 if beta is not None and beta < 1.2 else 0
     score += 1 if max_drawdown > -25 else 0
+    score += 1 if debt_to_equity is not None and debt_to_equity < 150 else 0
 
-    # Debt / equity — NOT available for CSE stocks; skip when missing
-    if debt_to_equity is not None:
-        metric_count += 1
-        score += 1 if debt_to_equity < 150 else 0
-
-    if metric_count == 0:
-        label = "Data unavailable"
-        explanation = "Insufficient data to assess risk for this stock."
-        score_ratio = 0.0
+    if score >= 3:
+        label = "Lower risk"
+        explanation = "The stock has been relatively steadier than many peers, though all equities still move around."
+    elif score >= 2:
+        label = "Moderate risk"
+        explanation = "This looks like a normal stock risk profile: not calm, not extreme."
     else:
-        score_ratio = score / metric_count
-        if score_ratio >= 0.75:
-            label = "Lower risk"
-            explanation = "The stock has been relatively steadier than many peers, though all equities still move around."
-        elif score_ratio >= 0.50:
-            label = "Moderate risk"
-            explanation = "This looks like a normal stock risk profile: not calm, not extreme."
-        else:
-            label = "Higher risk"
-            explanation = "The stock can swing a lot, so position size and time horizon matter more here."
+        label = "Higher risk"
+        explanation = "The stock can swing a lot, so position size and time horizon matter more here."
 
-    # Build metrics dict with only available fields
     metrics = {
         "Volatility": _format_percent(volatility),
         "Largest drop": _format_percent(max_drawdown),
+        "Beta": _format_ratio(beta),
+        "Debt / equity": _format_ratio(debt_to_equity),
     }
-    if beta is not None:
-        metrics["Beta"] = _format_ratio(beta)
-    if debt_to_equity is not None:
-        metrics["Debt / equity"] = _format_ratio(debt_to_equity)
 
-    return RiskResult(label=label, score=score_ratio, explanation=explanation, metrics=metrics)
+    return RiskResult(label=label, score=score / 4, explanation=explanation, metrics=metrics)
 
 
 def build_scenario_projection(data: pd.DataFrame, forecast: PredictionResult, currency_code: str = "USD") -> ScenarioResult:

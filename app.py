@@ -37,6 +37,8 @@ def _cached_fetch_live_trade_summary() -> tuple[list[dict], dict]:
     return _raw_fetch_live_trade_summary()
 
 from stock_utils import (
+    _format_currency,
+    _format_ratio,
     add_indicators,
     build_financial_health,
     build_risk_snapshot,
@@ -66,6 +68,99 @@ from risk_analyzer import (
 
 WATCHLIST_FILE = Path(__file__).with_name("watchlist.json").resolve()
 DEFAULT_WATCHLIST = ["CSE:JKH.N0000", "CSE:COMB.N0000", "CSE:LOLC.N0000", "US:AAPL"]
+
+RISK_RANKING_SNAPSHOT = Path(__file__).with_name(".risk_ranking_snapshot.json").resolve()
+
+
+def _migrate_old_signal(old: str) -> str:
+    """Map old 4-tier signal values to the new 5-tier system."""
+    mapping = {
+        "Buy": "Positive",
+        "Hold": "Neutral",
+        "Watch": "Caution",
+        "Avoid": "High Caution",
+    }
+    return mapping.get(old, "Neutral")
+
+
+def _migrate_ranking_schema(data: list[dict]) -> list[dict]:
+    """Add missing optional columns to old-format ranking data.
+
+    Phase 3 introduced ``signal_confidence`` and ``signal_components``
+    fields.  Snapshots written before that upgrade lack those columns.
+    This function fills them in so the table code never hits a KeyError
+    when selecting ``display_df`` columns.
+    """
+    OPTIONAL_FIELDS = {
+        "signal_confidence": None,
+        "signal_components": None,
+    }
+    OLD_SIGNALS = {"Buy", "Hold", "Watch", "Avoid"}
+
+    migrated = []
+    for row in data:
+        # 1. Backfill any missing columns
+        for field, default in OPTIONAL_FIELDS.items():
+            if field not in row:
+                row[field] = default
+
+        # 2. Map old 4-tier signal → new 5-tier names
+        signal = row.get("signal", "Neutral")
+        if signal in OLD_SIGNALS:
+            row["signal"] = _migrate_old_signal(signal)
+
+        # 3. Derive a sensible confidence when the field was just backfilled
+        if row.get("signal_confidence") is None:
+            row["signal_confidence"] = _estimate_confidence_from_signal(row["signal"])
+
+        migrated.append(row)
+    return migrated
+
+
+def _estimate_confidence_from_signal(signal: str) -> float:
+    """Return a reasonable default confidence for a signal value."""
+    mapping = {
+        "Strong Positive": 0.80,
+        "Positive": 0.70,
+        "Neutral": 0.60,
+        "Caution": 0.55,
+        "High Caution": 0.65,
+    }
+    return mapping.get(signal, 0.60)
+
+
+def _save_risk_ranking_snapshot(data: list[dict]) -> None:
+    """Persist the most recent successful risk ranking to disk.
+
+    Serves as a crash-recovery fallback — if all 167 yfinance calls
+    fail on a refresh, the user still sees the last successful table.
+    """
+    if not data:
+        return
+    try:
+        RISK_RANKING_SNAPSHOT.write_text(
+            json.dumps(data, indent=2, default=str),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass  # best-effort; snapshots are a nice-to-have
+
+
+def _load_risk_ranking_snapshot() -> list[dict] | None:
+    """Load the most recent successful risk ranking from disk, or return None.
+
+    Automatically migrates old-format snapshots (pre-Phase-3) so that
+    the rest of the UI can safely expect ``signal_confidence``,
+    ``signal_components`` and the new 5-tier signal names.
+    """
+    try:
+        if RISK_RANKING_SNAPSHOT.exists():
+            raw = json.loads(RISK_RANKING_SNAPSHOT.read_text(encoding="utf-8"))
+            if isinstance(raw, list):
+                return _migrate_ranking_schema(raw)
+    except Exception:
+        pass
+    return None
 
 
 st.set_page_config(page_title="Stock Scope", page_icon="📈", layout="wide")
@@ -170,10 +265,30 @@ def save_watchlist(watchlist: list[str]) -> None:
     WATCHLIST_FILE.write_text(json.dumps(sorted(set(watchlist)), indent=2), encoding="utf-8")
 
 
+def log_error(ticker: str, function: str, error: Exception) -> None:
+    """Log a remediation-relevant error to stderr with ticker and traceback."""
+    import sys, traceback
+    tb = "".join(traceback.format_exception_only(type(error), error)).strip()
+    print(f"[REMEDIATION] {ticker} | {function} | {tb}", file=sys.stderr)
+
+
+def _is_corrupted_name(name: str) -> bool:
+    """Detect names that are clearly corrupted (Yahoo internal format leakage)."""
+    if not name:
+        return True
+    if "," in name:
+        return True
+    if ".CM," in name:
+        return True
+    return False
+
+
 def display_company_name(company: dict, security) -> str:
+    from stock_utils import _is_valid_company_name
     provider_name = str(company.get("name") or "").strip()
-    if provider_name and provider_name.upper() != security.provider_symbol.upper():
-        return provider_name
+    if provider_name and _is_valid_company_name(provider_name):
+        if provider_name.upper() != security.provider_symbol.upper():
+            return provider_name
     return security.company_name
 
 
@@ -192,7 +307,11 @@ def build_quick_verdict(
     comparison,
     analysis_ticker: str,
 ) -> dict[str, str | float | list[str]]:
-    combined_score = (health.score * 28) + (valuation.score * 22) + (risk.score * 20) + (15 if forecast.slope > 0 else 6)
+    # Use neutral score (0.5) for unavailable data — it neither helps nor
+    # hurts the combined assessment.
+    health_score = health.score if health.score is not None else 0.5
+    valuation_score = valuation.score if valuation.score is not None else 0.5
+    combined_score = (health_score * 28) + (valuation_score * 22) + (risk.score * 20) + (15 if forecast.slope > 0 else 6)
     if news.average_score > 0.15:
         combined_score += 5
     elif news.average_score < -0.15:
@@ -241,6 +360,16 @@ def build_quick_verdict(
     }
 
 
+def _safe_context_float(context: dict, key: str, default: float = 0.0) -> float:
+    """Safely extract a float from context, returning *default* on None or bad value."""
+    from stock_utils import _safe_float
+    val = context.get(key)
+    if val is None:
+        return default
+    result = _safe_float(val)
+    return result if result is not None else default
+
+
 def answer_market_assistant(question: str, context: dict[str, object]) -> str:
     text = question.strip().lower()
     ticker = str(context.get("ticker", "this stock"))
@@ -256,12 +385,12 @@ def answer_market_assistant(question: str, context: dict[str, object]) -> str:
     trend_text = str(context.get("trend_text", "mixed"))
     momentum_text = str(context.get("momentum_text", "neutral"))
     news_label = str(context.get("news_label", "Mixed"))
-    news_score = float(context.get("news_score", 0.0))
-    forecast_slope = float(context.get("forecast_slope", 0.0))
-    forecast_score = float(context.get("forecast_score", 0.0))
-    current_price = float(context.get("current_price", 0.0))
-    fair_value = float(context.get("fair_value", current_price))
-    upside_pct = float(context.get("upside_pct", 0.0))
+    news_score = _safe_context_float(context, "news_score", 0.0)
+    forecast_slope = _safe_context_float(context, "forecast_slope", 0.0)
+    forecast_in_sample_score = _safe_context_float(context, "forecast_in_sample_score", 0.0)
+    current_price = _safe_context_float(context, "current_price", 0.0)
+    fair_value = _safe_context_float(context, "fair_value", current_price)
+    upside_pct = _safe_context_float(context, "upside_pct", 0.0)
     comparison_text = str(context.get("comparison_text", "No sector comparison is available right now."))
     scenario_bull = str(context.get("scenario_bull", ""))
     scenario_base = str(context.get("scenario_base", ""))
@@ -292,7 +421,7 @@ def answer_market_assistant(question: str, context: dict[str, object]) -> str:
 
     if "trend" in text or "technical" in text or "rsi" in text or "macd" in text or "momentum" in text:
         return (
-            f"The technical picture is {trend_text} and momentum is {momentum_text}. The forecast model slope is {forecast_slope:.4f} with a fit score of {forecast_score:.3f}, so the short-term direction is {'leaning up' if forecast_slope > 0 else 'leaning down' if forecast_slope < 0 else 'fairly flat'}."
+            f"The technical picture is {trend_text} and momentum is {momentum_text}. The forecast model slope is {forecast_slope:.4f}. The historical model fit score is {forecast_in_sample_score:.3f} (this measures how well the model matches past data, not future prediction accuracy), so the short-term direction is {'leaning up' if forecast_slope > 0 else 'leaning down' if forecast_slope < 0 else 'fairly flat'}."
         )
 
     if "news" in text or "sentiment" in text or "headline" in text:
@@ -344,14 +473,20 @@ def cached_forecast_prices(data: pd.DataFrame, days: int) -> object:
 
 @st.cache_data(ttl=3600, show_spinner="Analyzing CSE stocks for risk ranking...")
 def _cached_risk_ranking(horizon_days: int) -> list[dict]:
-    """Rank ALL CSE trading stocks by risk score.
+    """Rank ALL CSE trading stocks by risk score (cache-friendly, no progress).
 
     This is expensive because it iterates over all ~167 trading stocks
     and fetches price history for each.  Results are cached for 1 hour.
+
+    For a progress-enabled version (used when the user clicks *Run Analysis*)
+    the caller should invoke ``build_risk_ranking_table(...)`` directly.
     """
     companies = CSE_DIRECTORY.all_companies(only_trading=True)
     provider = get_provider(MARKET_CSE)
-    return build_risk_ranking_table(companies, provider, horizon_days)
+    results, _succeeded, _failed = build_risk_ranking_table(
+        companies, provider, horizon_days
+    )
+    return results
 
 
 if "watchlist" not in st.session_state:
@@ -370,6 +505,14 @@ if "assistant_pending_prompt" not in st.session_state:
     st.session_state.assistant_pending_prompt = None
 if "risk_ranking_data" not in st.session_state:
     st.session_state.risk_ranking_data = None
+if "risk_ranking_progress_current" not in st.session_state:
+    st.session_state.risk_ranking_progress_current = 0
+if "risk_ranking_progress_total" not in st.session_state:
+    st.session_state.risk_ranking_progress_total = 0
+if "risk_ranking_running" not in st.session_state:
+    st.session_state.risk_ranking_running = False
+if "risk_ranking_summary" not in st.session_state:
+    st.session_state.risk_ranking_summary = None
 if "risk_selected_ticker" not in st.session_state:
     st.session_state.risk_selected_ticker = None
 
@@ -676,7 +819,7 @@ else:
             "news_label": news.label,
             "news_score": news.average_score,
             "forecast_slope": forecast.slope,
-            "forecast_score": forecast.score,
+            "forecast_in_sample_score": forecast.in_sample_score,
             "current_price": stats["latest_close"],
             "fair_value": valuation.estimated_fair_value,
             "upside_pct": valuation.upside_pct,
@@ -718,11 +861,32 @@ else:
                     st.markdown(f"- {point}")
 
         summary_columns = st.columns(4)
+        # Health tone: green=Healthy, amber=Mixed, blue=Data unavailable, red=Watch
+        health_tone = (
+            "green" if health.label == "Healthy"
+            else "amber" if health.label == "Mixed"
+            else "blue" if health.label == "Data unavailable"
+            else "red"
+        )
+        # Valuation tone: green=Looks attractive, amber=Fair value, blue=Data unavailable, red=Looks expensive
+        valuation_tone = (
+            "green" if valuation.label == "Looks attractive"
+            else "amber" if valuation.label == "Fair value"
+            else "blue" if valuation.label == "Data unavailable"
+            else "red"
+        )
+        # Risk tone: green=Lower risk, amber=Moderate risk, blue=Data unavailable, red=Higher risk
+        risk_tone = (
+            "green" if risk.label == "Lower risk"
+            else "amber" if risk.label == "Moderate risk"
+            else "blue" if risk.label == "Data unavailable"
+            else "red"
+        )
         summary_metrics = [
             ("Price", f"{price_prefix}{stats['latest_close']:.2f}", "The latest market price.", "blue"),
-            ("Health", health.label, health.explanation, "green" if health.label == "Healthy" else "amber" if health.label == "Mixed" else "red"),
-            ("Value", valuation.label, valuation.explanation, "green" if valuation.label == "Looks attractive" else "amber" if valuation.label == "Fair value" else "red"),
-            ("Risk", risk.label, risk.explanation, "green" if risk.label == "Lower risk" else "amber" if risk.label == "Moderate risk" else "red"),
+            ("Health", health.label, health.explanation, health_tone),
+            ("Value", valuation.label, valuation.explanation, valuation_tone),
+            ("Risk", risk.label, risk.explanation, risk_tone),
         ]
         for column, (title, value, note, tone) in zip(summary_columns, summary_metrics):
             with column:
@@ -743,282 +907,363 @@ else:
         )
 
         with tab_overview:
-            with st.container(border=True):
-                st.subheader("Company Overview")
-                st.caption("What this means: who the company is and where it sits in the market.")
-                overview_left, overview_right = st.columns([1.15, 0.85])
-                with overview_left:
-                    st.markdown(f"**Company:** {company.get('name', display_label)}")
-                    st.markdown(f"**Market:** {security.market_label}")
-                    st.markdown(f"**Sector:** {sector}")
-                    st.markdown(f"**Industry:** {company.get('industry', 'Unknown')}")
-                    st.markdown(f"**Country:** {company.get('country', 'Unknown')}")
-                    st.markdown(f"**Market value:** {format_money(company_info.get('marketCap'), currency_code)}")
-                    if comparison is not None:
-                        st.write(
-                            f"Compared with {benchmark_ticker}, the stock has returned {comparison.relative_return_pct:.1f}% more over the selected period."
-                        )
-                    else:
-                        st.info(f"Sector comparison is unavailable right now. {comparison_error or ''}".strip())
-                with overview_right:
-                    st.markdown("**Recent news**")
-                    st.write(f"Headline sentiment is **{news.label.lower()}** for the latest articles.")
-                    if news.articles:
-                        for article in news.articles[:3]:
-                            tone = "green" if article["sentiment"] > 0.15 else "red" if article["sentiment"] < -0.15 else "amber"
-                            st.markdown(
-                                f"""
-                                <div style="margin-bottom:0.6rem;">
-                                    {make_status_chip(article['publisher'], tone)}
-                                    <div style="font-weight:600; margin-top:0.2rem;">{article['title']}</div>
-                                    <div style="color:#475569; font-size:0.92rem;">{article.get('summary') or 'No short summary was available.'}</div>
-                                </div>
-                                """,
-                                unsafe_allow_html=True,
+            try:
+                with st.container(border=True):
+                    st.subheader("Company Overview")
+                    st.caption("What this means: who the company is and where it sits in the market.")
+                    overview_left, overview_right = st.columns([1.15, 0.85])
+                    with overview_left:
+                        st.markdown(f"**Company:** {company.get('name', display_label)}")
+                        st.markdown(f"**Market:** {security.market_label}")
+                        st.markdown(f"**Sector:** {sector}")
+                        st.markdown(f"**Industry:** {company.get('industry', 'Unknown')}")
+                        st.markdown(f"**Country:** {company.get('country', 'Unknown')}")
+                        st.markdown(f"**Market value:** {format_money(company_info.get('marketCap'), currency_code)}")
+                        if comparison is not None:
+                            st.write(
+                                f"Compared with {benchmark_ticker}, the stock has returned {comparison.relative_return_pct:.1f}% more over the selected period."
                             )
+                        else:
+                            st.info(f"Sector comparison is unavailable right now. {comparison_error or ''}".strip())
+                    with overview_right:
+                        st.markdown("**Recent news**")
+                        st.write(f"Headline sentiment is **{news.label.lower()}** for the latest articles.")
+                        if news.articles:
+                            for article in news.articles[:3]:
+                                tone = "green" if article["sentiment"] > 0.15 else "red" if article["sentiment"] < -0.15 else "amber"
+                                st.markdown(
+                                    f"""
+                                    <div style="margin-bottom:0.6rem;">
+                                        {make_status_chip(article['publisher'], tone)}
+                                        <div style="font-weight:600; margin-top:0.2rem;">{article['title']}</div>
+                                        <div style="color:#475569; font-size:0.92rem;">{article.get('summary') or 'No short summary was available.'}</div>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True,
+                                )
+            except Exception as e:
+                st.warning("Company Overview data unavailable.")
+                log_error(display_label, "tab_overview", e)
 
         with tab_health:
-            with st.container(border=True):
-                st.subheader("Financial Health")
-                st.caption("What this means: whether the business looks sturdy enough to handle setbacks.")
-                st.write(health.explanation)
-                health_cols = st.columns(3)
-                health_items = list(health.metrics.items())[:6]
-                for index, (label, value) in enumerate(health_items):
-                    with health_cols[index % 3]:
-                        st.metric(label, value)
-                st.markdown(
-                    """
-                    <div style="margin-top:0.75rem; color:#334155;">
-                        Simple read: a stronger cash cushion, manageable debt, and healthy margins usually make the company easier to hold through rough patches.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        with tab_valuation:
-            with st.container(border=True):
-                st.subheader("Valuation")
-                st.caption("What this means: whether the stock looks cheap, fair, or expensive compared with its own earnings signals.")
-                st.write(valuation.explanation)
-                valuation_chart = go.Figure()
-                valuation_chart.add_trace(
-                    go.Bar(
-                        x=[valuation.current_price, valuation.estimated_fair_value],
-                        y=["Current price", "Estimated fair value"],
-                        orientation="h",
-                        marker=dict(color=["#2563eb", "#10b981"]),
-                        text=[f"{price_prefix}{valuation.current_price:.2f}", f"{price_prefix}{valuation.estimated_fair_value:.2f}"],
-                        textposition="auto",
-                        hovertemplate="%{y}: " + hover_currency + "<extra></extra>",
-                        showlegend=False,
-                    )
-                )
-                valuation_chart.update_layout(height=280, margin=dict(l=10, r=10, t=20, b=10), template="plotly_white", yaxis=dict(title=""))
-                st.plotly_chart(valuation_chart, width="stretch")
-                valuation_cols = st.columns(3)
-                for index, (label, value) in enumerate(list(valuation.metrics.items())[:6]):
-                    with valuation_cols[index % 3]:
-                        st.metric(label, value)
-                st.markdown(
-                    """
-                    <div style="margin-top:0.75rem; color:#334155;">
-                        Beginner takeaway: if the fair-value bar is well above the current price, the market may be pricing in extra upside. If it is below, the stock may already be expensive.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        with tab_technical:
-            with st.container(border=True):
-                st.subheader("Technical Analysis")
-                st.caption("What this means: the stock's recent trend and momentum.")
-                trend_note = "Price is above key moving averages, which often suggests positive momentum." if short_trend == "Uptrend" else "The trend is mixed, so the chart is less decisive right now."
-                momentum_note = "RSI is leaning strong." if momentum == "Strong" else "RSI is neutral." if momentum == "Neutral" else "RSI is weak, so the stock may have lost some momentum."
-                st.write(f"**Trend:** {short_trend}. {trend_note}")
-                st.write(f"**Momentum:** {momentum}. {momentum_note}")
-
-                technical_chart = go.Figure()
-                technical_chart.add_trace(
-                    go.Scatter(
-                        x=data["Date"],
-                        y=close_series,
-                        name="Close",
-                        line=dict(color="#2563eb", width=2.5),
-                        hovertemplate="%{x|%b %d, %Y}<br>Close: " + hover_currency + "<extra></extra>",
-                    )
-                )
-                technical_chart.add_trace(
-                    go.Scatter(
-                        x=data["Date"],
-                        y=data["SMA20"],
-                        name="20-day average",
-                        line=dict(color="#f59e0b", width=1.7),
-                        hovertemplate="%{x|%b %d, %Y}<br>20-day average: " + hover_currency + "<extra></extra>",
-                    )
-                )
-                technical_chart.add_trace(
-                    go.Scatter(
-                        x=data["Date"],
-                        y=data["SMA50"],
-                        name="50-day average",
-                        line=dict(color="#10b981", width=1.7),
-                        hovertemplate="%{x|%b %d, %Y}<br>50-day average: " + hover_currency + "<extra></extra>",
-                    )
-                )
-                technical_chart.update_layout(
-                    height=420,
-                    margin=dict(l=10, r=10, t=20, b=10),
-                    template="plotly_white",
-                    hovermode="x unified",
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
-                )
-                st.plotly_chart(technical_chart, width="stretch")
-                st.markdown(
-                    """
-                    <div style="color:#334155;">
-                        Simple read: when the price stays above both moving averages, the trend is usually healthier. When it slips below them, momentum tends to cool off.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        with tab_risk:
-            with st.container(border=True):
-                st.subheader("Risk")
-                st.caption("What this means: how much the stock tends to bounce around and how sensitive it can be to market moves.")
-                st.write(risk.explanation)
-                risk_cols = st.columns(4)
-                for index, (label, value) in enumerate(risk.metrics.items()):
-                    with risk_cols[index % 4]:
-                        st.metric(label, value)
-                if comparison is not None:
-                    st.markdown(
-                        f"""
-                        <div style="margin-top:0.75rem; color:#334155;">
-                            Compared with {benchmark_ticker}, the stock has moved with a correlation of {comparison.correlation:.2f}. That means it often follows the market direction but still keeps its own personality.
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-
-        with tab_scenarios:
-            with st.container(border=True):
-                st.subheader("Bull / Base / Bear Scenarios")
-                st.caption("What this means: a simple range of possible paths, not a promise of what will happen.")
-                scenario_chart = go.Figure()
-                scenario_chart.add_trace(
-                    go.Scatter(
-                        x=scenario.bear_path["Date"],
-                        y=scenario.bear_path["Bear"],
-                        name="Bear",
-                        line=dict(color="#ef4444", width=2),
-                        hovertemplate="%{x|%b %d, %Y}<br>Bear: " + hover_currency + "<extra></extra>",
-                    )
-                )
-                scenario_chart.add_trace(
-                    go.Scatter(
-                        x=scenario.bull_path["Date"],
-                        y=scenario.bull_path["Bull"],
-                        name="Bull",
-                        line=dict(color="#10b981", width=2),
-                        fill="tonexty",
-                        fillcolor="rgba(16, 185, 129, 0.10)",
-                        hovertemplate="%{x|%b %d, %Y}<br>Bull: " + hover_currency + "<extra></extra>",
-                    )
-                )
-                scenario_chart.add_trace(
-                    go.Scatter(
-                        x=scenario.base_path["Date"],
-                        y=scenario.base_path["Base"],
-                        name="Base",
-                        line=dict(color="#2563eb", width=2.5, dash="dot"),
-                        hovertemplate="%{x|%b %d, %Y}<br>Base: " + hover_currency + "<extra></extra>",
-                    )
-                )
-                scenario_chart.update_layout(
-                    height=430,
-                    margin=dict(l=10, r=10, t=20, b=10),
-                    template="plotly_white",
-                    hovermode="x unified",
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
-                )
-                st.plotly_chart(scenario_chart, width="stretch")
-
-                scenario_cols = st.columns(3)
-                scenario_cards = [
-                    ("Bull", scenario.summary["bull"], "green"),
-                    ("Base", scenario.summary["base"], "blue"),
-                    ("Bear", scenario.summary["bear"], "red"),
-                ]
-                for column, (label, message, tone) in zip(scenario_cols, scenario_cards):
-                    with column:
+            try:
+                with st.container(border=True):
+                    st.subheader("Financial Health")
+                    st.caption("What this means: whether the business looks sturdy enough to handle setbacks.")
+                    if health.label == "Data unavailable":
+                        st.info(
+                            "Financial statement data is not available from public APIs for CSE stocks. "
+                            "CSE does not provide balance sheet or income statement data through its public API, "
+                            "and Yahoo Finance does not have CSE fundamental data."
+                        )
+                        # Show what IS available from the CSE API
+                        cse_fields = {
+                            "Market Cap": _format_currency(company_info.get("cse_market_cap"), currency_code),
+                            "52-Week High": _format_currency(company_info.get("cse_52w_high"), currency_code),
+                            "52-Week Low": _format_currency(company_info.get("cse_52w_low"), currency_code),
+                            "Beta": _format_ratio(company_info.get("cse_beta") or company_info.get("beta")),
+                            "Volume (today)": f"{company_info.get('cse_volume', 'Data unavailable'):,}" if company_info.get("cse_volume") else "Data unavailable",
+                            "Turnover (today)": _format_currency(company_info.get("cse_turnover"), currency_code),
+                        }
+                        st.markdown("**What is available from the CSE API for this stock:**")
+                        cse_cols = st.columns(3)
+                        for idx, (field_label, field_value) in enumerate(cse_fields.items()):
+                            with cse_cols[idx % 3]:
+                                st.metric(field_label, field_value)
                         st.markdown(
-                            f"""
-                            <div class="section-card">
-                                <div class="mini-label">{label}</div>
-                                <p class="what-this-means" style="margin-bottom:0;">{message}</p>
-                                <div style="margin-top:0.6rem;">{make_status_chip(label, tone)}</div>
+                            """
+                            <div style="margin-top:0.75rem; color:#334155;">
+                                For financial health analysis, review annual reports on <a href="https://www.cse.lk" target="_blank">cse.lk</a>.
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
-                st.markdown(
-                    """
-                    <div style="margin-top:0.75rem; color:#334155;">
-                        Beginner takeaway: the base case is the middle path, the bull case is the optimistic path, and the bear case is the caution path.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                    else:
+                        st.write(health.explanation)
+                        health_cols = st.columns(3)
+                        health_items = list(health.metrics.items())[:6]
+                        for index, (label, value) in enumerate(health_items):
+                            with health_cols[index % 3]:
+                                st.metric(label, value)
+                        st.markdown(
+                            """
+                            <div style="margin-top:0.75rem; color:#334155;">
+                                Simple read: a stronger cash cushion, manageable debt, and healthy margins usually make the company easier to hold through rough patches.
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+            except Exception as e:
+                st.warning("Financial Health data unavailable.")
+                log_error(display_label, "tab_health", e)
+
+        with tab_valuation:
+            try:
+                with st.container(border=True):
+                    st.subheader("Valuation")
+                    st.caption("What this means: whether the stock looks cheap, fair, or expensive compared with its own earnings signals.")
+                    if valuation.label == "Data unavailable":
+                        st.info(
+                            "Valuation analysis is not available for CSE stocks through public APIs. "
+                            "P/E ratio, P/B ratio, analyst targets, and EPS data require financial "
+                            "statements which CSE does not provide through its public API."
+                        )
+                        st.markdown(
+                            """
+                            <div style="margin-top:0.75rem; color:#334155;">
+                                <strong>For valuation analysis, review:</strong><br>
+                                &bull; Annual reports on <a href="https://www.cse.lk" target="_blank">cse.lk</a><br>
+                                &bull; Broker research reports<br>
+                                &bull; Industry comparisons
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.write(valuation.explanation)
+                        valuation_chart = go.Figure()
+                        valuation_chart.add_trace(
+                            go.Bar(
+                                x=[valuation.current_price, valuation.estimated_fair_value],
+                                y=["Current price", "Estimated fair value"],
+                                orientation="h",
+                                marker=dict(color=["#2563eb", "#10b981"]),
+                                text=[f"{price_prefix}{valuation.current_price:.2f}", f"{price_prefix}{valuation.estimated_fair_value:.2f}"],
+                                textposition="auto",
+                                hovertemplate="%{y}: " + hover_currency + "<extra></extra>",
+                                showlegend=False,
+                            )
+                        )
+                        valuation_chart.update_layout(height=280, margin=dict(l=10, r=10, t=20, b=10), template="plotly_white", yaxis=dict(title=""))
+                        st.plotly_chart(valuation_chart, width="stretch")
+                        valuation_cols = st.columns(3)
+                        for index, (label, value) in enumerate(list(valuation.metrics.items())[:6]):
+                            with valuation_cols[index % 3]:
+                                st.metric(label, value)
+                        st.markdown(
+                            """
+                            <div style="margin-top:0.75rem; color:#334155;">
+                                Beginner takeaway: if the fair-value bar is well above the current price, the market may be pricing in extra upside. If it is below, the stock may already be expensive.
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+            except Exception as e:
+                st.warning("Valuation data unavailable.")
+                log_error(display_label, "tab_valuation", e)
+
+        with tab_technical:
+            try:
+                with st.container(border=True):
+                    st.subheader("Technical Analysis")
+                    st.caption("What this means: the stock's recent trend and momentum.")
+                    trend_note = "Price is above key moving averages, which often suggests positive momentum." if short_trend == "Uptrend" else "The trend is mixed, so the chart is less decisive right now."
+                    momentum_note = "RSI is leaning strong." if momentum == "Strong" else "RSI is neutral." if momentum == "Neutral" else "RSI is weak, so the stock may have lost some momentum."
+                    st.write(f"**Trend:** {short_trend}. {trend_note}")
+                    st.write(f"**Momentum:** {momentum}. {momentum_note}")
+
+                    technical_chart = go.Figure()
+                    technical_chart.add_trace(
+                        go.Scatter(
+                            x=data["Date"],
+                            y=close_series,
+                            name="Close",
+                            line=dict(color="#2563eb", width=2.5),
+                            hovertemplate="%{x|%b %d, %Y}<br>Close: " + hover_currency + "<extra></extra>",
+                        )
+                    )
+                    technical_chart.add_trace(
+                        go.Scatter(
+                            x=data["Date"],
+                            y=data["SMA20"],
+                            name="20-day average",
+                            line=dict(color="#f59e0b", width=1.7),
+                            hovertemplate="%{x|%b %d, %Y}<br>20-day average: " + hover_currency + "<extra></extra>",
+                        )
+                    )
+                    technical_chart.add_trace(
+                        go.Scatter(
+                            x=data["Date"],
+                            y=data["SMA50"],
+                            name="50-day average",
+                            line=dict(color="#10b981", width=1.7),
+                            hovertemplate="%{x|%b %d, %Y}<br>50-day average: " + hover_currency + "<extra></extra>",
+                        )
+                    )
+                    technical_chart.update_layout(
+                        height=420,
+                        margin=dict(l=10, r=10, t=20, b=10),
+                        template="plotly_white",
+                        hovermode="x unified",
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+                    )
+                    st.plotly_chart(technical_chart, width="stretch")
+                    st.markdown(
+                        """
+                        <div style="color:#334155;">
+                            Simple read: when the price stays above both moving averages, the trend is usually healthier. When it slips below them, momentum tends to cool off.
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+            except Exception as e:
+                st.warning("Technical Analysis data unavailable.")
+                log_error(display_label, "tab_technical", e)
+
+        with tab_risk:
+            try:
+                with st.container(border=True):
+                    st.subheader("Risk")
+                    st.caption("What this means: how much the stock tends to bounce around and how sensitive it can be to market moves.")
+                    st.write(risk.explanation)
+                    risk_metrics = list(risk.metrics.items())
+                    num_risk_metrics = len(risk_metrics)
+                    risk_cols = st.columns(max(num_risk_metrics, 1))
+                    for index, (label, value) in enumerate(risk_metrics):
+                        with risk_cols[index % num_risk_metrics if num_risk_metrics > 0 else 0]:
+                            st.metric(label, value)
+                    if comparison is not None:
+                        st.markdown(
+                            f"""
+                            <div style="margin-top:0.75rem; color:#334155;">
+                                Compared with {benchmark_ticker}, the stock has moved with a correlation of {comparison.correlation:.2f}. That means it often follows the market direction but still keeps its own personality.
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+            except Exception as e:
+                st.warning("Risk data unavailable.")
+                log_error(display_label, "tab_risk", e)
+
+        with tab_scenarios:
+            try:
+                with st.container(border=True):
+                    st.subheader("Bull / Base / Bear Scenarios")
+                    st.caption("What this means: a simple range of possible paths, not a promise of what will happen.")
+                    scenario_chart = go.Figure()
+                    scenario_chart.add_trace(
+                        go.Scatter(
+                            x=scenario.bear_path["Date"],
+                            y=scenario.bear_path["Bear"],
+                            name="Bear",
+                            line=dict(color="#ef4444", width=2),
+                            hovertemplate="%{x|%b %d, %Y}<br>Bear: " + hover_currency + "<extra></extra>",
+                        )
+                    )
+                    scenario_chart.add_trace(
+                        go.Scatter(
+                            x=scenario.bull_path["Date"],
+                            y=scenario.bull_path["Bull"],
+                            name="Bull",
+                            line=dict(color="#10b981", width=2),
+                            fill="tonexty",
+                            fillcolor="rgba(16, 185, 129, 0.10)",
+                            hovertemplate="%{x|%b %d, %Y}<br>Bull: " + hover_currency + "<extra></extra>",
+                        )
+                    )
+                    scenario_chart.add_trace(
+                        go.Scatter(
+                            x=scenario.base_path["Date"],
+                            y=scenario.base_path["Base"],
+                            name="Base",
+                            line=dict(color="#2563eb", width=2.5, dash="dot"),
+                            hovertemplate="%{x|%b %d, %Y}<br>Base: " + hover_currency + "<extra></extra>",
+                        )
+                    )
+                    scenario_chart.update_layout(
+                        height=430,
+                        margin=dict(l=10, r=10, t=20, b=10),
+                        template="plotly_white",
+                        hovermode="x unified",
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+                    )
+                    st.plotly_chart(scenario_chart, width="stretch")
+
+                    scenario_cols = st.columns(3)
+                    scenario_cards = [
+                        ("Bull", scenario.summary["bull"], "green"),
+                        ("Base", scenario.summary["base"], "blue"),
+                        ("Bear", scenario.summary["bear"], "red"),
+                    ]
+                    for column, (label, message, tone) in zip(scenario_cols, scenario_cards):
+                        with column:
+                            st.markdown(
+                                f"""
+                                <div class="section-card">
+                                    <div class="mini-label">{label}</div>
+                                    <p class="what-this-means" style="margin-bottom:0;">{message}</p>
+                                    <div style="margin-top:0.6rem;">{make_status_chip(label, tone)}</div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+                    st.markdown(
+                        """
+                        <div style="margin-top:0.75rem; color:#334155;">
+                            Beginner takeaway: the base case is the middle path, the bull case is the optimistic path, and the bear case is the caution path.
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+            except Exception as e:
+                st.warning("Scenario data unavailable.")
+                log_error(display_label, "tab_scenarios", e)
 
         with tab_summary:
-            with st.container(border=True):
-                st.subheader("Final Summary")
-                st.caption("What this means: a simple plain-English wrap-up.")
-                st.markdown(f"<div class='status-chip {analysis_overview['tone']}'> {analysis_overview['label']} </div>", unsafe_allow_html=True)
-                st.write(analysis_overview["explanation"])
-                st.markdown(
-                    f"""
-                    <div style="margin-top:0.75rem; color:#334155;">
-                        Short version: the market is saying {stats['change_pct']:.1f}% over the selected period, the latest momentum is {momentum.lower()}, and the valuation story is {valuation.label.lower()}.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+            try:
+                with st.container(border=True):
+                    st.subheader("Final Summary")
+                    st.caption("What this means: a simple plain-English wrap-up.")
+                    st.markdown(f"<div class='status-chip {analysis_overview['tone']}'> {analysis_overview['label']} </div>", unsafe_allow_html=True)
+                    st.write(analysis_overview["explanation"])
+                    st.markdown(
+                        f"""
+                        <div style="margin-top:0.75rem; color:#334155;">
+                            Short version: the market is saying {stats['change_pct']:.1f}% over the selected period, the latest momentum is {momentum.lower()}, and the valuation story is {valuation.label.lower()}.
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+            except Exception as e:
+                st.warning("Summary data unavailable.")
+                log_error(display_label, "tab_summary", e)
 
         with tab_assistant:
-            with st.container(border=True):
-                st.subheader("Market Assistant")
-                st.caption("Ask simple questions about the current ticker. This local assistant uses the analysis on the page.")
-                quick_questions = st.columns(4)
-                quick_prompts = [
-                    "Should I buy this stock?",
-                    "How does the valuation look?",
-                    "What is the risk level?",
-                    "Explain the bull/base/bear scenarios.",
-                ]
-                for column, prompt in zip(quick_questions, quick_prompts):
-                    with column:
-                        if st.button(prompt, width="stretch", key=f"assistant_{prompt}"):
-                            st.session_state.assistant_pending_prompt = prompt
+            try:
+                with st.container(border=True):
+                    st.subheader("Market Assistant")
+                    st.caption("Ask simple questions about the current ticker. This local assistant uses the analysis on the page.")
+                    quick_questions = st.columns(4)
+                    quick_prompts = [
+                        "Should I buy this stock?",
+                        "How does the valuation look?",
+                        "What is the risk level?",
+                        "Explain the bull/base/bear scenarios.",
+                    ]
+                    for column, prompt in zip(quick_questions, quick_prompts):
+                        with column:
+                            if st.button(prompt, width="stretch", key=f"assistant_{prompt}"):
+                                st.session_state.assistant_pending_prompt = prompt
 
-                for message in st.session_state.assistant_messages:
-                    with st.chat_message(message["role"]):
-                        st.write(message["content"])
+                    for message in st.session_state.assistant_messages:
+                        with st.chat_message(message["role"]):
+                            st.write(message["content"])
 
-                user_prompt = st.chat_input(f"Ask about {display_label}...", key=f"assistant_input_{security.watchlist_key}")
-                prompt_to_answer = user_prompt or st.session_state.assistant_pending_prompt
-                if prompt_to_answer:
-                    st.session_state.assistant_pending_prompt = None
-                    st.session_state.assistant_messages.append({"role": "user", "content": prompt_to_answer})
-                    with st.chat_message("user"):
-                        st.write(prompt_to_answer)
-                    with st.chat_message("assistant"):
-                        with st.spinner("Thinking through the data..."):
-                            reply = answer_market_assistant(prompt_to_answer, assistant_context)
-                            st.write(reply)
-                    st.session_state.assistant_messages.append({"role": "assistant", "content": reply})
+                    user_prompt = st.chat_input(f"Ask about {display_label}...", key=f"assistant_input_{security.watchlist_key}")
+                    prompt_to_answer = user_prompt or st.session_state.assistant_pending_prompt
+                    if prompt_to_answer:
+                        st.session_state.assistant_pending_prompt = None
+                        st.session_state.assistant_messages.append({"role": "user", "content": prompt_to_answer})
+                        with st.chat_message("user"):
+                            st.write(prompt_to_answer)
+                        with st.chat_message("assistant"):
+                            with st.spinner("Thinking through the data..."):
+                                reply = answer_market_assistant(prompt_to_answer, assistant_context)
+                                st.write(reply)
+                        st.session_state.assistant_messages.append({"role": "assistant", "content": reply})
+            except Exception as e:
+                st.warning("Assistant temporarily unavailable.")
+                log_error(display_label, "tab_assistant", e)
 
         # ── Risk & Investment Simulator Tab ──────────────────────────────────────
         with tab_risk_simulator:
@@ -1059,16 +1304,70 @@ else:
                         )
                     run_button = st.button("Run Analysis", type="primary", use_container_width=True)
 
-                # When "Run Analysis" is clicked or data already exists
+                # ── "Run Analysis" button handler ──────────────────────────────
                 if run_button:
                     horizon_days = get_horizon_days(invest_horizon)
-                    with st.spinner("Analyzing all CSE stocks for risk ranking..."):
-                        ranking_data = _cached_risk_ranking(horizon_days)
+                    companies = CSE_DIRECTORY.all_companies(only_trading=True)
+                    provider = get_provider(MARKET_CSE)
+                    total = len(companies)
+
+                    # Store progress metadata before the blocking call so the
+                    # progress bar lives across the same script run.
+                    st.session_state.risk_ranking_running = True
+                    st.session_state.risk_ranking_progress_current = 0
+                    st.session_state.risk_ranking_progress_total = total
+
+                    # Progress bar + status text (renders incrementally in Streamlit)
+                    progress_bar = st.progress(0.0, text="Starting analysis...")
+                    status_placeholder = st.empty()
+
+                    def _progress_cb(current: int, total: int, symbol: str) -> None:
+                        fraction = current / total if total > 0 else 0.0
+                        progress_bar.progress(
+                            fraction,
+                            text=f"Analyzing {symbol} ({current}/{total})",
+                        )
+                        status_placeholder.text(
+                            f"Processing {symbol} — {current} of {total}"
+                        )
+
+                    ranking_data, succeeded, failed = build_risk_ranking_table(
+                        companies,
+                        provider,
+                        horizon_days,
+                        progress_callback=_progress_cb,
+                    )
+
+                    # Clean up progress UI
+                    progress_bar.empty()
+                    status_placeholder.empty()
+
+                    # Persist to disk (crash-recovery safety net)
+                    _save_risk_ranking_snapshot(ranking_data)
+
                     st.session_state.risk_ranking_data = ranking_data
+                    st.session_state.risk_ranking_summary = (
+                        f"Ranked {succeeded}/{total} stocks. "
+                        f"{failed} stock{'s' if failed != 1 else ''} skipped "
+                        "(data unavailable)."
+                    )
+                    st.session_state.risk_ranking_running = False
                     st.session_state.risk_selected_ticker = None
                     st.rerun()
 
+                # ── Load from session state (fast — no yfinance calls) ──────
                 ranking_data = st.session_state.risk_ranking_data
+
+                # ── Fallback: load from disk snapshot if nothing in session ──
+                if ranking_data is None:
+                    snapshot = _load_risk_ranking_snapshot()
+                    if snapshot is not None:
+                        ranking_data = snapshot
+                        st.session_state.risk_ranking_data = snapshot
+                        st.info(
+                            "Showing last successful ranking from disk. "
+                            "Click **Run Analysis** for fresh data."
+                        )
 
                 if ranking_data is not None:
                     df_ranking = pd.DataFrame(ranking_data)
@@ -1098,7 +1397,7 @@ else:
                         with fcol3:
                             signal_filter = st.selectbox(
                                 "Signal",
-                                options=["All", "Buy", "Hold", "Watch", "Avoid"],
+                                options=["All", "Strong Positive", "Positive", "Neutral", "Caution", "High Caution"],
                                 index=0,
                                 key="risk_signal_filter",
                             )
@@ -1112,19 +1411,26 @@ else:
                         if signal_filter != "All":
                             filtered = filtered[filtered["signal"] == signal_filter]
 
-                        # Build display columns for the dataframe
-                        display_df = filtered[[
+                        # Ensure all display columns exist (for schema migration from old snapshots)
+                        display_cols = [
                             "rank", "company", "ticker", "sector", "current_price",
                             "risk_score", "risk_level", "volatility", "beta", "max_drawdown",
                             "debt_risk", "liquidity_risk", "financial_health",
-                            "historical_return_pct", "signal",
-                        ]].copy()
+                            "historical_return_pct", "signal", "signal_confidence",
+                        ]
+                        missing = [c for c in display_cols if c not in filtered.columns]
+                        if missing:
+                            log_error("ranking_table", "column_validation", f"Missing columns: {missing}")
+                            for c in missing:
+                                filtered[c] = None  # add nullable placeholder
+
+                        display_df = filtered[display_cols].copy()
 
                         display_df.columns = [
                             "Rank", "Company", "Ticker", "Sector", "Price (LKR)",
                             "Risk Score", "Risk Level", "Volatility %", "Beta", "Max DD %",
                             "Debt Risk", "Liq. Risk", "Financial Health",
-                            "Hist. Return %", "Signal",
+                            "Hist. Return %", "Signal", "Confidence",
                         ]
 
                         # Color-code Risk Score and Signal using Styler
@@ -1141,41 +1447,49 @@ else:
 
                         def _color_signal(val):
                             mapping = {
-                                "Buy": "background-color: #dcfce7; color: #166534; font-weight: 700",
-                                "Hold": "background-color: #dbeafe; color: #1d4ed8; font-weight: 700",
-                                "Watch": "background-color: #fef3c7; color: #92400e; font-weight: 700",
-                                "Avoid": "background-color: #fee2e2; color: #991b1b; font-weight: 700",
+                                "Strong Positive": "background-color: #dcfce7; color: #166534; font-weight: 700",
+                                "Positive": "background-color: #bbf7d0; color: #166534; font-weight: 700",
+                                "Neutral": "background-color: #dbeafe; color: #1d4ed8; font-weight: 700",
+                                "Caution": "background-color: #fef3c7; color: #92400e; font-weight: 700",
+                                "High Caution": "background-color: #fee2e2; color: #991b1b; font-weight: 700",
                             }
                             return mapping.get(val, "")
 
-                        styled = display_df.style \
-                            .applymap(_color_risk, subset=["Risk Score"]) \
-                            .applymap(_color_signal, subset=["Signal"]) \
-                            .format({
-                                "Price (LKR)": "LKR {:.2f}",
-                                "Risk Score": "{:.1f}",
-                                "Volatility %": "{:.1f}%",
-                                "Beta": "{:.2f}",
-                                "Max DD %": "{:.1f}%",
-                                "Hist. Return %": "{:+.1f}%",
-                            })
+                        try:
+                            styled = display_df.style \
+                                .map(_color_risk, subset=["Risk Score"]) \
+                                .map(_color_signal, subset=["Signal"]) \
+                                .format({
+                                    "Price (LKR)": "LKR {:.2f}",
+                                    "Risk Score": "{:.1f}",
+                                    "Volatility %": "{:.1f}%",
+                                    "Beta": "{:.2f}",
+                                    "Max DD %": "{:.1f}%",
+                                    "Hist. Return %": "{:+.1f}%",
+                                })
 
-                        st.dataframe(
-                            styled,
-                            use_container_width=True,
-                            hide_index=True,
-                            column_config={
-                                "Rank": st.column_config.NumberColumn(width="small"),
-                                "Company": st.column_config.TextColumn(width="medium"),
-                                "Ticker": st.column_config.TextColumn(width="small"),
-                                "Price (LKR)": st.column_config.TextColumn(width="small"),
-                                "Risk Score": st.column_config.NumberColumn(width="small"),
-                                "Volatility %": st.column_config.TextColumn(width="small"),
-                            },
-                        )
+                            st.dataframe(
+                                styled,
+                                width="stretch",
+                                hide_index=True,
+                                column_config={
+                                    "Rank": st.column_config.NumberColumn(width="small"),
+                                    "Company": st.column_config.TextColumn(width="medium"),
+                                    "Ticker": st.column_config.TextColumn(width="small"),
+                                    "Price (LKR)": st.column_config.TextColumn(width="small"),
+                                    "Risk Score": st.column_config.NumberColumn(width="small"),
+                                    "Volatility %": st.column_config.TextColumn(width="small"),
+                                },
+                            )
 
-                        st.caption(f"Showing {len(filtered)} of {len(df_ranking)} ranked stocks. "
-                                   "Sort by any column by clicking the column header.")
+                            st.caption(f"Showing {len(filtered)} of {len(df_ranking)} ranked stocks. "
+                                       "Sort by any column by clicking the column header.")
+
+                            if st.session_state.get("risk_ranking_summary"):
+                                st.success(st.session_state.risk_ranking_summary)
+                        except Exception as e:
+                            st.warning("Risk ranking table display unavailable.")
+                            log_error(display_label, "risk_ranking_table", e)
 
                     # ── Stock selector for calculator ─────────────────────────
                     ticker_options = [""] + sorted(df_ranking["ticker"].tolist())
@@ -1265,7 +1579,7 @@ else:
                                     ],
                                 }
                                 fv_df = pd.DataFrame(fv_data)
-                                st.dataframe(fv_df, use_container_width=True, hide_index=True)
+                                st.dataframe(fv_df, width="stretch", hide_index=True)
                                 st.info(
                                     "These are estimated scenarios based on historical volatility "
                                     "and do not guarantee future results."
@@ -1300,7 +1614,7 @@ else:
                                     yaxis=dict(title="Estimated Portfolio Value (LKR)"),
                                     xaxis=dict(title="Scenario"),
                                 )
-                                st.plotly_chart(fig_scenario, use_container_width=True)
+                                st.plotly_chart(fig_scenario, width="stretch")
 
                             # ── Section 6: Risk vs Reward Comparison ──────────────
                             with st.container(border=True):
@@ -1325,30 +1639,42 @@ else:
                                     )['portfolio_value']:,.2f}",
                                     axis=1,
                                 )
-                                compare_df = top_stocks[[
+                                compare_cols = [
                                     "rank", "company", "ticker", "sector", "current_price",
                                     "risk_score", "risk_level", "historical_return_pct",
                                     "Risk-Adjusted Score", "Base Value (LKR 100k)", "signal",
-                                ]].copy()
+                                    "signal_confidence",
+                                ]
+                                missing_cmp = [c for c in compare_cols if c not in top_stocks.columns]
+                                if missing_cmp:
+                                    log_error("ranking_comparison", "column_validation",
+                                              f"Missing columns: {missing_cmp}")
+                                    for c in missing_cmp:
+                                        top_stocks[c] = None
+                                compare_df = top_stocks[compare_cols].copy()
                                 compare_df.columns = [
                                     "Rank", "Company", "Ticker", "Sector", "Price (LKR)",
                                     "Risk Score", "Risk Level", "Hist. Return %",
-                                    "Risk-Adj. Score", "Base Value (100k)", "Signal",
+                                    "Risk-Adj. Score", "Base Value (100k)", "Signal", "Confidence",
                                 ]
-                                styled_compare = compare_df.style \
-                                    .applymap(_color_risk, subset=["Risk Score"]) \
-                                    .applymap(_color_signal, subset=["Signal"]) \
-                                    .format({
-                                        "Price (LKR)": "LKR {:.2f}",
-                                        "Risk Score": "{:.1f}",
-                                        "Hist. Return %": "{:+.1f}%",
-                                        "Risk-Adj. Score": "{:.1f}",
-                                    })
-                                st.dataframe(
-                                    styled_compare,
-                                    use_container_width=True,
-                                    hide_index=True,
-                                )
+                                try:
+                                    styled_compare = compare_df.style \
+                                        .map(_color_risk, subset=["Risk Score"]) \
+                                        .map(_color_signal, subset=["Signal"]) \
+                                        .format({
+                                            "Price (LKR)": "LKR {:.2f}",
+                                            "Risk Score": "{:.1f}",
+                                            "Hist. Return %": "{:+.1f}%",
+                                            "Risk-Adj. Score": "{:.1f}",
+                                        })
+                                    st.dataframe(
+                                        styled_compare,
+                                        width="stretch",
+                                        hide_index=True,
+                                    )
+                                except Exception as e:
+                                    st.warning("Top stock comparison display unavailable.")
+                                    log_error(display_label, "risk_comparison_table", e)
 
                     # ── Section 7: Investment Allocation Tool ─────────────────────
                     with st.container(border=True):
@@ -1392,7 +1718,7 @@ else:
                                             "Price (LKR)": f"LKR {s['share_price']:.2f}",
                                         })
                                     alloc_table = pd.DataFrame(alloc_rows)
-                                    st.dataframe(alloc_table, use_container_width=True, hide_index=True)
+                                    st.dataframe(alloc_table, width="stretch", hide_index=True)
 
                                     # Projections
                                     pcol1, pcol2, pcol3 = st.columns(3)
@@ -1422,7 +1748,7 @@ else:
                                         yaxis=dict(title="Allocation %", range=[0, 100]),
                                         xaxis=dict(title="Stock"),
                                     )
-                                    st.plotly_chart(fig_alloc, use_container_width=True)
+                                    st.plotly_chart(fig_alloc, width="stretch")
 
                 # ── Final disclaimer ──────────────────────────────────────────────
                 st.markdown("---")

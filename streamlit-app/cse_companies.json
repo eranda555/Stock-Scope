@@ -1,0 +1,2869 @@
+{
+  "companies": [
+    {
+      "name": "ABANS ELECTRICALS PLC",
+      "symbol": "ABAN.N0000",
+      "yfinance_symbol": "ABAN-N0000.CM",
+      "price": 1145.5,
+      "market_cap": 5854146480.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ABANS FINANCE PLC",
+      "symbol": "AFSL.N0000",
+      "yfinance_symbol": "AFSL-N0000.CM",
+      "price": 98.4,
+      "market_cap": 7251408026.4,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ACCESS ENGINEERING PLC",
+      "symbol": "AEL.N0000",
+      "yfinance_symbol": "AEL-N0000.CM",
+      "price": 78.1,
+      "market_cap": 78100000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ACL CABLES PLC",
+      "symbol": "ACL.N0000",
+      "yfinance_symbol": "ACL-N0000.CM",
+      "price": 100.25,
+      "market_cap": 72052097040.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ACL PLASTICS PLC",
+      "symbol": "APLA.N0000",
+      "yfinance_symbol": "APLA-N0000.CM",
+      "price": 151.0,
+      "market_cap": 6360875000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ACME PRINTING & PACKAGING PLC",
+      "symbol": "ACME.N0000",
+      "yfinance_symbol": "ACME-N0000.CM",
+      "price": 5.0,
+      "market_cap": 3325000000.0,
+      "status": 1,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "AGALAWATTE  PLANTATIONS  PLC",
+      "symbol": "AGAL.N0000",
+      "yfinance_symbol": "AGAL-N0000.CM",
+      "price": 53.6,
+      "market_cap": 8375000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "AGSTAR PLC",
+      "symbol": "AGST.N0000",
+      "yfinance_symbol": "AGST-N0000.CM",
+      "price": 11.8,
+      "market_cap": 5443215687.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "AITKEN SPENCE HOTEL HOLDINGS PLC",
+      "symbol": "AHUN.N0000",
+      "yfinance_symbol": "AHUN-N0000.CM",
+      "price": 92.8,
+      "market_cap": 31207712928.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "AITKEN SPENCE PLC",
+      "symbol": "SPEN.N0000",
+      "yfinance_symbol": "SPEN-N0000.CM",
+      "price": 149.75,
+      "market_cap": 60797907738.75,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ALLIANCE FINANCE COMPANY PLC",
+      "symbol": "ALLI.N0000",
+      "yfinance_symbol": "ALLI-N0000.CM",
+      "price": 330.0,
+      "market_cap": 11119680000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ALPHA FIRE SERVICES PLC",
+      "symbol": "AFS.N0000",
+      "yfinance_symbol": "AFS-N0000.CM",
+      "price": 29.2,
+      "market_cap": 1108140000.0,
+      "status": 5,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ALUMEX PLC",
+      "symbol": "ALUM.N0000",
+      "yfinance_symbol": "ALUM-N0000.CM",
+      "price": 17.4,
+      "market_cap": 10415738832.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "AMANA BANK PLC",
+      "symbol": "ABL.N0000",
+      "yfinance_symbol": "ABL-N0000.CM",
+      "price": 26.3,
+      "market_cap": 14497159797.8,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "AMANA TAKAFUL PLC",
+      "symbol": "ATL.N0000",
+      "yfinance_symbol": "ATL-N0000.CM",
+      "price": 20.8,
+      "market_cap": 6229825763.2,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "AMANA TAKAFUL LIFE PLC",
+      "symbol": "ATLL.N0000",
+      "yfinance_symbol": "ATLL-N0000.CM",
+      "price": 24.5,
+      "market_cap": 1225000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "AMBEON CAPITAL PLC",
+      "symbol": "TAP.N0000",
+      "yfinance_symbol": "TAP-N0000.CM",
+      "price": 32.0,
+      "market_cap": 32715291616.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "AMBEON HOLDINGS PLC",
+      "symbol": "GREG.N0000",
+      "yfinance_symbol": "GREG-N0000.CM",
+      "price": 39.2,
+      "market_cap": 55957163628.8,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ARPICO INSURANCE PLC",
+      "symbol": "AINS.N0000",
+      "yfinance_symbol": "AINS-N0000.CM",
+      "price": 29.0,
+      "market_cap": 1920681803.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ASIA ASSET FINANCE PLC",
+      "symbol": "AAF.N0000",
+      "yfinance_symbol": "AAF-N0000.CM",
+      "price": 60.4,
+      "market_cap": 7501410193.2,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ASIA SIYAKA COMMODITIES LIMITED",
+      "symbol": "ASIY.N0000",
+      "yfinance_symbol": "ASIY-N0000.CM",
+      "price": 13.3,
+      "market_cap": 3458000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ASIAN HOTELS AND PROPERTIES PLC",
+      "symbol": "AHPL.N0000",
+      "yfinance_symbol": "AHPL-N0000.CM",
+      "price": 50.0,
+      "market_cap": 22138765000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ASIRI SURGICAL HOSPITAL PLC",
+      "symbol": "AMSL.N0000",
+      "yfinance_symbol": "AMSL-N0000.CM",
+      "price": 16.2,
+      "market_cap": 8561012229.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ASIRI HOSPITAL HOLDINGS PLC",
+      "symbol": "ASIR.N0000",
+      "yfinance_symbol": "ASIR-N0000.CM",
+      "price": 37.5,
+      "market_cap": 42657509850.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ASSOCIATED MOTOR FINANCE COMPANY PLC",
+      "symbol": "AMF.N0000",
+      "yfinance_symbol": "AMF-N0000.CM",
+      "price": 53.1,
+      "market_cap": 6017677930.8,
+      "status": 1,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "Agarapatana Plantations PLC",
+      "symbol": "AGPL.N0000",
+      "yfinance_symbol": "AGPL-N0000.CM",
+      "price": 16.0,
+      "market_cap": 8000000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "B P P L HOLDINGS PLC",
+      "symbol": "BPPL.N0000",
+      "yfinance_symbol": "BPPL-N0000.CM",
+      "price": 18.8,
+      "market_cap": 5768655111.6,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "BAIRAHA FARMS PLC",
+      "symbol": "BFL.N0000",
+      "yfinance_symbol": "BFL-N0000.CM",
+      "price": 88.8,
+      "market_cap": 7814400000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "BALANGODA  PLANTATIONS  PLC",
+      "symbol": "BALA.N0000",
+      "yfinance_symbol": "BALA-N0000.CM",
+      "price": 60.5,
+      "market_cap": 2859999923.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "BERUWALA RESORTS PLC",
+      "symbol": "BERU.N0000",
+      "yfinance_symbol": "BERU-N0000.CM",
+      "price": 3.0,
+      "market_cap": 2101632885.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "BOGALA GRAPHITE LANKA PLC",
+      "symbol": "BOGA.N0000",
+      "yfinance_symbol": "BOGA-N0000.CM",
+      "price": 144.0,
+      "market_cap": 13627138176.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "BOGAWANTALAWA TEA ESTATES PLC",
+      "symbol": "BOPL.N0000",
+      "yfinance_symbol": "BOPL-N0000.CM",
+      "price": 67.9,
+      "market_cap": 5686625000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "BROWN & COMPANY PLC",
+      "symbol": "BRWN.N0000",
+      "yfinance_symbol": "BRWN-N0000.CM",
+      "price": 148.5,
+      "market_cap": 31574812500.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "BROWNS INVESTMENTS PLC",
+      "symbol": "BIL.N0000",
+      "yfinance_symbol": "BIL-N0000.CM",
+      "price": 5.6,
+      "market_cap": 80470417776.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "BUKIT DARAH PLC",
+      "symbol": "BUKI.N0000",
+      "yfinance_symbol": "BUKI-N0000.CM",
+      "price": 864.75,
+      "market_cap": 88204500000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "C M HOLDINGS PLC",
+      "symbol": "COLO.N0000",
+      "yfinance_symbol": "COLO-N0000.CM",
+      "price": 38.7,
+      "market_cap": 5882400000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "C T HOLDINGS PLC",
+      "symbol": "CTHR.N0000",
+      "yfinance_symbol": "CTHR-N0000.CM",
+      "price": 545.0,
+      "market_cap": 109766803010.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "C T LAND DEVELOPMENT PLC",
+      "symbol": "CTLD.N0000",
+      "yfinance_symbol": "CTLD-N0000.CM",
+      "price": 38.5,
+      "market_cap": 3128125000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "C. W. MACKIE PLC",
+      "symbol": "CWM.N0000",
+      "yfinance_symbol": "CWM-N0000.CM",
+      "price": 40.0,
+      "market_cap": 7197711200.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CABLE SOLUTIONS PLC",
+      "symbol": "CSLK.N0000",
+      "yfinance_symbol": "CSLK-N0000.CM",
+      "price": 12.2,
+      "market_cap": 5742132520.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CAL FIVE YEAR CLOSED END FUND (\u201cUnits\u201d)",
+      "symbol": "CALC.U0000",
+      "yfinance_symbol": "CALC.U0000.CM",
+      "price": 13.2,
+      "market_cap": 12077015887.2,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CAL FIVE YEAR OPTIMUM FUND (\u201cUnits\u201d)",
+      "symbol": "CALI.U0000",
+      "yfinance_symbol": "CALI.U0000.CM",
+      "price": 13.8,
+      "market_cap": 2675881106.4,
+      "status": 4,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CAL THREE YEAR CLOSED END FUND (\u201cUnits\u201d)",
+      "symbol": "CALU.U0000",
+      "yfinance_symbol": "CALU.U0000.CM",
+      "price": 10.0,
+      "market_cap": 8412633750.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CAPITAL ALLIANCE HOLDINGS PLC",
+      "symbol": "CALH.N0000",
+      "yfinance_symbol": "CALH-N0000.CM",
+      "price": 13.9,
+      "market_cap": 28801485895.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CAPITAL ALLIANCE PLC",
+      "symbol": "CALT.N0000",
+      "yfinance_symbol": "CALT-N0000.CM",
+      "price": 52.0,
+      "market_cap": 17129729968.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CARGILLS (CEYLON) PLC",
+      "symbol": "CARG.N0000",
+      "yfinance_symbol": "CARG-N0000.CM",
+      "price": 640.0,
+      "market_cap": 164913747840.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CARGILLS BANK PLC",
+      "symbol": "CBNK.N0000",
+      "yfinance_symbol": "CBNK-N0000.CM",
+      "price": 8.0,
+      "market_cap": 9918742864.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CARGO BOAT DEVELOPMENT COMPANY PLC",
+      "symbol": "CABO.N0000",
+      "yfinance_symbol": "CABO-N0000.CM",
+      "price": 198.0,
+      "market_cap": 3570335010.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CARSON CUMBERBATCH PLC",
+      "symbol": "CARS.N0000",
+      "yfinance_symbol": "CARS-N0000.CM",
+      "price": 770.0,
+      "market_cap": 151217923780.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CENTRAL FINANCE COMPANY PLC",
+      "symbol": "CFIN.N0000",
+      "yfinance_symbol": "CFIN-N0000.CM",
+      "price": 226.25,
+      "market_cap": 51438947027.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CENTRAL INDUSTRIES PLC",
+      "symbol": "CIND.N0000",
+      "yfinance_symbol": "CIND-N0000.CM",
+      "price": 221.0,
+      "market_cap": 5347137653.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLINCO HOLDINGS PLC",
+      "symbol": "CINS.X0000",
+      "yfinance_symbol": "CINS.X0000.CM",
+      "price": 1613.75,
+      "market_cap": 10351367100.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLON COLD STORES PLC",
+      "symbol": "CCS.N0000",
+      "yfinance_symbol": "CCS-N0000.CM",
+      "price": 128.25,
+      "market_cap": 121888800000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLON GRAIN ELEVATORS PLC",
+      "symbol": "GRAN.N0000",
+      "yfinance_symbol": "GRAN-N0000.CM",
+      "price": 484.0,
+      "market_cap": 29040000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLON GUARDIAN INVESTMENT TRUST PLC",
+      "symbol": "GUAR.N0000",
+      "yfinance_symbol": "GUAR-N0000.CM",
+      "price": 230.0,
+      "market_cap": 18413337930.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLON HOSPITALS PLC",
+      "symbol": "CHL.N0000",
+      "yfinance_symbol": "CHL-N0000.CM",
+      "price": 65.6,
+      "market_cap": 8334538515.2,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLON HOSPITALS PLC",
+      "symbol": "CHL.X0000",
+      "yfinance_symbol": "CHL.X0000.CM",
+      "price": 50.6,
+      "market_cap": 2051074036.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLON HOTELS CORPORATION PLC",
+      "symbol": "CHOT.N0000",
+      "yfinance_symbol": "CHOT-N0000.CM",
+      "price": 32.0,
+      "market_cap": 5760990144.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLON INVESTMENT PLC",
+      "symbol": "CINV.N0000",
+      "yfinance_symbol": "CINV-N0000.CM",
+      "price": 105.0,
+      "market_cap": 10206078015.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLON LAND & EQUITY PLC",
+      "symbol": "KZOO.N0000",
+      "yfinance_symbol": "KZOO-N0000.CM",
+      "price": 9.5,
+      "market_cap": 8751733459.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLON TEA BROKERS PLC",
+      "symbol": "CTBL.N0000",
+      "yfinance_symbol": "CTBL-N0000.CM",
+      "price": 11.2,
+      "market_cap": 2042880000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CEYLON TOBACCO COMPANY PLC",
+      "symbol": "CTC.N0000",
+      "yfinance_symbol": "CTC-N0000.CM",
+      "price": 1800.0,
+      "market_cap": 337182751800.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CHEMANEX PLC",
+      "symbol": "CHMX.N0000",
+      "yfinance_symbol": "CHMX-N0000.CM",
+      "price": 162.5,
+      "market_cap": 2624757362.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CHEVRON LUBRICANTS  LANKA  PLC",
+      "symbol": "LLUB.N0000",
+      "yfinance_symbol": "LLUB-N0000.CM",
+      "price": 199.25,
+      "market_cap": 47820000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CHRISSWORLD PLC",
+      "symbol": "CWL.N0000",
+      "yfinance_symbol": "CWL-N0000.CM",
+      "price": 19.3,
+      "market_cap": 579000000.0,
+      "status": 5,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "C I C HOLDINGS PLC",
+      "symbol": "CIC.N0000",
+      "yfinance_symbol": "CIC-N0000.CM",
+      "price": 31.3,
+      "market_cap": 45635400000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "C I C HOLDINGS PLC",
+      "symbol": "CIC.X0000",
+      "yfinance_symbol": "CIC.X0000.CM",
+      "price": 25.5,
+      "market_cap": 11153700000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CITIZENS DEVELOPMENT BUSINESS FINANCE PLC",
+      "symbol": "CDB.X0000",
+      "yfinance_symbol": "CDB.X0000.CM",
+      "price": 34.0,
+      "market_cap": 3516847120.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CITIZENS DEVELOPMENT BUSINESS FINANCE PLC",
+      "symbol": "CDB.N0000",
+      "yfinance_symbol": "CDB-N0000.CM",
+      "price": 42.8,
+      "market_cap": 26276185168.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "CITRUS LEISURE PLC",
+      "symbol": "REEF.N0000",
+      "yfinance_symbol": "REEF-N0000.CM",
+      "price": 4.2,
+      "market_cap": 2711455643.4,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "Co-operative Insurance Company PLC",
+      "symbol": "COOP.N0000",
+      "yfinance_symbol": "COOP-N0000.CM",
+      "price": 3.7,
+      "market_cap": 6113057120.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "COLOMBO CITY HOLDINGS PLC",
+      "symbol": "PHAR.N0000",
+      "yfinance_symbol": "PHAR-N0000.CM",
+      "price": 169.0,
+      "market_cap": 4302256660.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "COLOMBO DOCKYARD PLC",
+      "symbol": "DOCK.N0000",
+      "yfinance_symbol": "DOCK-N0000.CM",
+      "price": 128.25,
+      "market_cap": 50687488516.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "COLOMBO FORT INVESTMENTS PLC",
+      "symbol": "CFI.N0000",
+      "yfinance_symbol": "CFI-N0000.CM",
+      "price": 400.0,
+      "market_cap": 3575860400.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "COLOMBO LAND AND DEVELOPMENT COMPANY PLC",
+      "symbol": "CLND.N0000",
+      "yfinance_symbol": "CLND-N0000.CM",
+      "price": 54.1,
+      "market_cap": 10813562532.8,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "COMMERCIAL BANK OF CEYLON PLC",
+      "symbol": "COMB.N0000",
+      "yfinance_symbol": "COMB-N0000.CM",
+      "price": 208.0,
+      "market_cap": 323695464144.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "COMMERCIAL BANK OF CEYLON PLC",
+      "symbol": "COMB.X0000",
+      "yfinance_symbol": "COMB.X0000.CM",
+      "price": 191.25,
+      "market_cap": 18613586981.25,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "COMMERCIAL CREDIT AND FINANCE PLC",
+      "symbol": "COCR.N0000",
+      "yfinance_symbol": "COCR-N0000.CM",
+      "price": 117.75,
+      "market_cap": 37453256478.75,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "COMMERCIAL DEVELOPMENT COMPANY PLC",
+      "symbol": "COMD.N0000",
+      "yfinance_symbol": "COMD-N0000.CM",
+      "price": 305.0,
+      "market_cap": 3660000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "DANKOTUWA PORCELAIN PLC",
+      "symbol": "DPL.N0000",
+      "yfinance_symbol": "DPL-N0000.CM",
+      "price": 15.3,
+      "market_cap": 2487059676.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "DFCC BANK PLC",
+      "symbol": "DFCC.N0000",
+      "yfinance_symbol": "DFCC-N0000.CM",
+      "price": 131.75,
+      "market_cap": 59381712317.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "DIALOG AXIATA PLC",
+      "symbol": "DIAL.N0000",
+      "yfinance_symbol": "DIAL-N0000.CM",
+      "price": 45.5,
+      "market_cap": 418615242227.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "DIALOG FINANCE PLC",
+      "symbol": "CALF.N0000",
+      "yfinance_symbol": "CALF-N0000.CM",
+      "price": 132.25,
+      "market_cap": 15526132278.5,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "DIESEL & MOTOR ENGINEERING PLC",
+      "symbol": "DIMO.N0000",
+      "yfinance_symbol": "DIMO-N0000.CM",
+      "price": 1525.0,
+      "market_cap": 14078028350.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "DIGITAL MOBILITY SOLUTIONS LANKA PLC",
+      "symbol": "PKME.N0000",
+      "yfinance_symbol": "PKME-N0000.CM",
+      "price": 169.75,
+      "market_cap": 56581693491.75,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "DILMAH CEYLON TEA COMPANY PLC",
+      "symbol": "CTEA.N0000",
+      "yfinance_symbol": "CTEA-N0000.CM",
+      "price": 1491.0,
+      "market_cap": 30919612500.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "DIPPED PRODUCTS PLC",
+      "symbol": "DIPD.N0000",
+      "yfinance_symbol": "DIPD-N0000.CM",
+      "price": 57.0,
+      "market_cap": 34121061840.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "DISTILLERIES COMPANY OF SRI LANKA PLC",
+      "symbol": "DIST.N0000",
+      "yfinance_symbol": "DIST-N0000.CM",
+      "price": 57.4,
+      "market_cap": 264040000000.0,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "DOLPHIN HOTELS PLC",
+      "symbol": "STAF.N0000",
+      "yfinance_symbol": "STAF-N0000.CM",
+      "price": 45.0,
+      "market_cap": 2845932930.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "E B CREASY & COMPANY PLC",
+      "symbol": "EBCR.N0000",
+      "yfinance_symbol": "EBCR-N0000.CM",
+      "price": 42.0,
+      "market_cap": 11713815960.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "E M L CONSULTANTS PLC",
+      "symbol": "EML.N0000",
+      "yfinance_symbol": "EML-N0000.CM",
+      "price": 9.5,
+      "market_cap": 863550000.0,
+      "status": 5,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "E - CHANNELLING PLC",
+      "symbol": "ECL.N0000",
+      "yfinance_symbol": "ECL-N0000.CM",
+      "price": 15.3,
+      "market_cap": 1868610649.5,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "EAST WEST PROPERTIES PLC",
+      "symbol": "EAST.N0000",
+      "yfinance_symbol": "EAST-N0000.CM",
+      "price": 60.4,
+      "market_cap": 8349696000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "EASTERN MERCHANTS PLC",
+      "symbol": "EMER.N0000",
+      "yfinance_symbol": "EMER-N0000.CM",
+      "price": 13.1,
+      "market_cap": 1538542600.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "EDEN HOTEL LANKA PLC",
+      "symbol": "EDEN.N0000",
+      "yfinance_symbol": "EDEN-N0000.CM",
+      "price": 10.8,
+      "market_cap": 17107200000.0,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ELPITIYA PLANTATIONS PLC",
+      "symbol": "ELPL.N0000",
+      "yfinance_symbol": "ELPL-N0000.CM",
+      "price": 182.5,
+      "market_cap": 13298123110.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "EQUITY TWO PLC",
+      "symbol": "ETWO.N0000",
+      "yfinance_symbol": "ETWO-N0000.CM",
+      "price": 64.0,
+      "market_cap": 1984000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "Ex-pack Corrugated Cartons PLC",
+      "symbol": "PACK.N0000",
+      "yfinance_symbol": "PACK-N0000.CM",
+      "price": 12.2,
+      "market_cap": 4066666662.6,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "EXTERMINATORS PLC",
+      "symbol": "EXT.N0000",
+      "yfinance_symbol": "EXT-N0000.CM",
+      "price": 14.0,
+      "market_cap": 739934426.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "FIRST CAPITAL HOLDINGS PLC",
+      "symbol": "CFVF.N0000",
+      "yfinance_symbol": "CFVF-N0000.CM",
+      "price": 51.1,
+      "market_cap": 20695500000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "First Capital Treasuries PLC",
+      "symbol": "FCT.N0000",
+      "yfinance_symbol": "FCT-N0000.CM",
+      "price": 30.8,
+      "market_cap": 18960480000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "GALADARI HOTELS (LANKA) PLC",
+      "symbol": "GHLL.N0000",
+      "yfinance_symbol": "GHLL-N0000.CM",
+      "price": 15.7,
+      "market_cap": 7863024154.8,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "GALLE FACE CAPITAL PARTNERS PLC",
+      "symbol": "WAPO.N0000",
+      "yfinance_symbol": "WAPO-N0000.CM",
+      "price": 23.4,
+      "market_cap": 2768877914.4,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "GESTETNER OF CEYLON PLC",
+      "symbol": "GEST.N0000",
+      "yfinance_symbol": "GEST-N0000.CM",
+      "price": 373.0,
+      "market_cap": 991363876.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "GREENTECH ENERGY PLC",
+      "symbol": "MEL.N0000",
+      "yfinance_symbol": "MEL-N0000.CM",
+      "price": 5.8,
+      "market_cap": 580000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HAPUGASTENNE PLANTATIONS PLC",
+      "symbol": "HAPU.N0000",
+      "yfinance_symbol": "HAPU-N0000.CM",
+      "price": 59.6,
+      "market_cap": 2760421024.4,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HARISCHANDRA MILLS PLC",
+      "symbol": "HARI.N0000",
+      "yfinance_symbol": "HARI-N0000.CM",
+      "price": 5318.5,
+      "market_cap": 10209392600.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HATTON NATIONAL BANK PLC",
+      "symbol": "HNB.N0000",
+      "yfinance_symbol": "HNB-N0000.CM",
+      "price": 396.75,
+      "market_cap": 182591562915.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HATTON NATIONAL BANK PLC",
+      "symbol": "HNB.X0000",
+      "yfinance_symbol": "HNB.X0000.CM",
+      "price": 334.75,
+      "market_cap": 39200560652.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HATTON PLANTATIONS PLC",
+      "symbol": "HPL.N0000",
+      "yfinance_symbol": "HPL-N0000.CM",
+      "price": 25.7,
+      "market_cap": 6082333444.7,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HAYCARB PLC",
+      "symbol": "HAYC.N0000",
+      "yfinance_symbol": "HAYC-N0000.CM",
+      "price": 160.5,
+      "market_cap": 47688361875.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HAYLEYS FABRIC PLC",
+      "symbol": "MGT.N0000",
+      "yfinance_symbol": "MGT-N0000.CM",
+      "price": 31.7,
+      "market_cap": 13170772299.2,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HAYLEYS FIBRE PLC",
+      "symbol": "HEXP.N0000",
+      "yfinance_symbol": "HEXP-N0000.CM",
+      "price": 159.0,
+      "market_cap": 3816000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HAYLEYS LEISURE PLC",
+      "symbol": "CONN.N0000",
+      "yfinance_symbol": "CONN-N0000.CM",
+      "price": 28.0,
+      "market_cap": 3023718824.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HAYLEYS PLC",
+      "symbol": "HAYL.N0000",
+      "yfinance_symbol": "HAYL-N0000.CM",
+      "price": 238.0,
+      "market_cap": 189210000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HEMAS HOLDINGS PLC",
+      "symbol": "HHL.N0000",
+      "yfinance_symbol": "HHL-N0000.CM",
+      "price": 32.8,
+      "market_cap": 98268308492.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HIKKADUWA BEACH RESORT PLC",
+      "symbol": "CITH.N0000",
+      "yfinance_symbol": "CITH-N0000.CM",
+      "price": 5.2,
+      "market_cap": 2821850361.2,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HNB FINANCE PLC",
+      "symbol": "HNBF.X0000",
+      "yfinance_symbol": "HNBF.X0000.CM",
+      "price": 7.9,
+      "market_cap": 2846567500.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HNB FINANCE PLC",
+      "symbol": "HNBF.N0000",
+      "yfinance_symbol": "HNBF-N0000.CM",
+      "price": 9.0,
+      "market_cap": 15457514283.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HNB LIFE PLC",
+      "symbol": "HASU.N0000",
+      "yfinance_symbol": "HASU-N0000.CM",
+      "price": 150.0,
+      "market_cap": 22500000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HORANA PLANTATIONS PLC",
+      "symbol": "HOPL.N0000",
+      "yfinance_symbol": "HOPL-N0000.CM",
+      "price": 54.0,
+      "market_cap": 1350000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HOTEL SIGIRIYA PLC",
+      "symbol": "HSIG.N0000",
+      "yfinance_symbol": "HSIG-N0000.CM",
+      "price": 72.6,
+      "market_cap": 1276090200.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HOUSING DEVELOPMENT FINANCE CORPORATION BANK OF SL",
+      "symbol": "HDFC.N0000",
+      "yfinance_symbol": "HDFC-N0000.CM",
+      "price": 71.1,
+      "market_cap": 4600917972.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "hSenid Business Solutions PLC",
+      "symbol": "HBS.N0000",
+      "yfinance_symbol": "HBS-N0000.CM",
+      "price": 26.0,
+      "market_cap": 7418885344.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HUNAS HOLDINGS PLC",
+      "symbol": "HUNA.N0000",
+      "yfinance_symbol": "HUNA-N0000.CM",
+      "price": 17.5,
+      "market_cap": 14858025000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "HVA FOODS PLC",
+      "symbol": "HVA.N0000",
+      "yfinance_symbol": "HVA-N0000.CM",
+      "price": 5.9,
+      "market_cap": 1442704509.2,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "INDUSTRIAL ASPHALTS (CEYLON) PLC",
+      "symbol": "ASPH.N0000",
+      "yfinance_symbol": "ASPH-N0000.CM",
+      "price": 0.6,
+      "market_cap": 2249646750.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "INSUREME INSURANCE BROKERS PLC",
+      "symbol": "INME.N0000",
+      "yfinance_symbol": "INME-N0000.CM",
+      "price": 1807.5,
+      "market_cap": 3714936675.0,
+      "status": 5,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "JANASHAKTHI FINANCE PLC",
+      "symbol": "BFN.N0000",
+      "yfinance_symbol": "BFN-N0000.CM",
+      "price": 35.5,
+      "market_cap": 7494091002.5,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "JANASHAKTHI INSURANCE PLC",
+      "symbol": "JINS.N0000",
+      "yfinance_symbol": "JINS-N0000.CM",
+      "price": 45.1,
+      "market_cap": 30648988500.9,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "JANASHAKTHI PLC",
+      "symbol": "JXG.N0000",
+      "yfinance_symbol": "JXG-N0000.CM",
+      "price": 12.0,
+      "market_cap": 27600000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "JAT HOLDINGS PLC",
+      "symbol": "JAT.N0000",
+      "yfinance_symbol": "JAT-N0000.CM",
+      "price": 38.6,
+      "market_cap": 20166047973.6,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "JETWING SYMPHONY PLC",
+      "symbol": "JETS.N0000",
+      "yfinance_symbol": "JETS-N0000.CM",
+      "price": 14.3,
+      "market_cap": 8611296393.7,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "JF PACKAGING PLC",
+      "symbol": "JFP.N0000",
+      "yfinance_symbol": "JFP-N0000.CM",
+      "price": 15.0,
+      "market_cap": 2581964160.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "JOHN KEELLS HOLDINGS PLC",
+      "symbol": "JKH.N0000",
+      "yfinance_symbol": "JKH-N0000.CM",
+      "price": 20.1,
+      "market_cap": 356355229710.6,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "JOHN KEELLS HOTELS PLC",
+      "symbol": "KHL.N0000",
+      "yfinance_symbol": "KHL-N0000.CM",
+      "price": 17.9,
+      "market_cap": 26065027362.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "JOHN KEELLS PLC",
+      "symbol": "JKL.N0000",
+      "yfinance_symbol": "JKL-N0000.CM",
+      "price": 78.7,
+      "market_cap": 4784960000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "KAHAWATTE  PLANTATIONS  PLC",
+      "symbol": "KAHA.N0000",
+      "yfinance_symbol": "KAHA-N0000.CM",
+      "price": 17.0,
+      "market_cap": 1689913747.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "KAPRUKA HOLDINGS PLC",
+      "symbol": "KPHL.N0000",
+      "yfinance_symbol": "KPHL-N0000.CM",
+      "price": 20.9,
+      "market_cap": 3430324524.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "KEELLS FOOD PRODUCTS PLC",
+      "symbol": "KFP.N0000",
+      "yfinance_symbol": "KFP-N0000.CM",
+      "price": 173.25,
+      "market_cap": 4417875000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "KEGALLE  PLANTATIONS  PLC",
+      "symbol": "KGAL.N0000",
+      "yfinance_symbol": "KGAL-N0000.CM",
+      "price": 140.0,
+      "market_cap": 3500000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "KELANI CABLES PLC",
+      "symbol": "KCAB.N0000",
+      "yfinance_symbol": "KCAB-N0000.CM",
+      "price": 109.75,
+      "market_cap": 23925500000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "KELANI TYRES PLC",
+      "symbol": "TYRE.N0000",
+      "yfinance_symbol": "TYRE-N0000.CM",
+      "price": 88.0,
+      "market_cap": 7075200000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "KELANI VALLEY PLANTATIONS PLC",
+      "symbol": "KVAL.N0000",
+      "yfinance_symbol": "KVAL-N0000.CM",
+      "price": 84.2,
+      "market_cap": 5725600000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "KERNER HAUS GLOBAL SOLUTIONS PLC",
+      "symbol": "CPRT.N0000",
+      "yfinance_symbol": "CPRT-N0000.CM",
+      "price": 37.0,
+      "market_cap": 1554440300.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "KOTAGALA PLANTATIONS PLC",
+      "symbol": "KOTA.N0000",
+      "yfinance_symbol": "KOTA-N0000.CM",
+      "price": 8.7,
+      "market_cap": 3681323437.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "KOTMALE HOLDINGS PLC",
+      "symbol": "LAMB.N0000",
+      "yfinance_symbol": "LAMB-N0000.CM",
+      "price": 1231.0,
+      "market_cap": 38653400000.0,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LB FINANCE PLC",
+      "symbol": "LFIN.N0000",
+      "yfinance_symbol": "LFIN-N0000.CM",
+      "price": 167.25,
+      "market_cap": 92666055996.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LAKE HOUSE PRINTERS & PUBLISHERS PLC",
+      "symbol": "LPRT.N0000",
+      "yfinance_symbol": "LPRT-N0000.CM",
+      "price": 705.0,
+      "market_cap": 2070757725.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKA ALUMINIUM INDUSTRIES PLC",
+      "symbol": "LALU.N0000",
+      "yfinance_symbol": "LALU-N0000.CM",
+      "price": 43.3,
+      "market_cap": 2966661179.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKA ASHOK LEYLAND PLC",
+      "symbol": "ASHO.N0000",
+      "yfinance_symbol": "ASHO-N0000.CM",
+      "price": 2879.25,
+      "market_cap": 10425312207.75,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKA CERAMIC PLC",
+      "symbol": "CERA.N0000",
+      "yfinance_symbol": "CERA-N0000.CM",
+      "price": 180.5,
+      "market_cap": 1083000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKA CREDIT AND BUSINESS FINANCE PLC",
+      "symbol": "LCBF.N0000",
+      "yfinance_symbol": "LCBF-N0000.CM",
+      "price": 6.6,
+      "market_cap": 5215113948.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKA IOC PLC",
+      "symbol": "LIOC.N0000",
+      "yfinance_symbol": "LIOC-N0000.CM",
+      "price": 141.5,
+      "market_cap": 75343897257.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKA MILK FOODS (CWE) PLC",
+      "symbol": "LMF.N0000",
+      "yfinance_symbol": "LMF-N0000.CM",
+      "price": 87.7,
+      "market_cap": 35078246000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKA REALTY INVESTMENTS PLC",
+      "symbol": "ASCO.N0000",
+      "yfinance_symbol": "ASCO-N0000.CM",
+      "price": 58.5,
+      "market_cap": 12365170038.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKA TILES PLC",
+      "symbol": "TILE.N0000",
+      "yfinance_symbol": "TILE-N0000.CM",
+      "price": 44.7,
+      "market_cap": 11856766635.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKA VENTURES PLC",
+      "symbol": "LVEN.N0000",
+      "yfinance_symbol": "LVEN-N0000.CM",
+      "price": 54.0,
+      "market_cap": 3149546328.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKA WALLTILE PLC",
+      "symbol": "LWL.N0000",
+      "yfinance_symbol": "LWL-N0000.CM",
+      "price": 45.0,
+      "market_cap": 12285000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKEM CEYLON PLC",
+      "symbol": "LCEY.N0000",
+      "yfinance_symbol": "LCEY-N0000.CM",
+      "price": 39.9,
+      "market_cap": 5476488544.8,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LANKEM DEVELOPMENTS PLC",
+      "symbol": "LDEV.N0000",
+      "yfinance_symbol": "LDEV-N0000.CM",
+      "price": 18.3,
+      "market_cap": 2928000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LAUGFS GAS PLC",
+      "symbol": "LGL.X0000",
+      "yfinance_symbol": "LGL.X0000.CM",
+      "price": 43.8,
+      "market_cap": 2277600000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LAUGFS GAS PLC",
+      "symbol": "LGL.N0000",
+      "yfinance_symbol": "LGL-N0000.CM",
+      "price": 51.8,
+      "market_cap": 17353004454.8,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LAUGFS POWER PLC",
+      "symbol": "LPL.N0000",
+      "yfinance_symbol": "LPL-N0000.CM",
+      "price": 11.1,
+      "market_cap": 3718500954.6,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LAUGFS POWER PLC",
+      "symbol": "LPL.X0000",
+      "yfinance_symbol": "LPL.X0000.CM",
+      "price": 9.1,
+      "market_cap": 473200000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LAXAPANA PLC",
+      "symbol": "LITE.N0000",
+      "yfinance_symbol": "LITE-N0000.CM",
+      "price": 44.9,
+      "market_cap": 2973499761.1,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LEE HEDGES PLC",
+      "symbol": "SHAW.N0000",
+      "yfinance_symbol": "SHAW-N0000.CM",
+      "price": 316.5,
+      "market_cap": 8103264045.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LION BREWERY (CEYLON) PLC",
+      "symbol": "LION.N0000",
+      "yfinance_symbol": "LION-N0000.CM",
+      "price": 1834.0,
+      "market_cap": 146720000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LOLC FINANCE PLC",
+      "symbol": "LOFC.N0000",
+      "yfinance_symbol": "LOFC-N0000.CM",
+      "price": 5.2,
+      "market_cap": 153712765237.2,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LOLC GENERAL INSURANCE PLC",
+      "symbol": "LGIL.N0000",
+      "yfinance_symbol": "LGIL-N0000.CM",
+      "price": 7.5,
+      "market_cap": 9000000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "L O L C HOLDINGS PLC",
+      "symbol": "LOLC.N0000",
+      "yfinance_symbol": "LOLC-N0000.CM",
+      "price": 511.25,
+      "market_cap": 242946000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LOTUS HYDRO POWER PLC",
+      "symbol": "HPFL.N0000",
+      "yfinance_symbol": "HPFL-N0000.CM",
+      "price": 14.0,
+      "market_cap": 1527233568.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "LUMINEX PLC",
+      "symbol": "LUMX.N0000",
+      "yfinance_symbol": "LUMX-N0000.CM",
+      "price": 10.9,
+      "market_cap": 2956625000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "L V L ENERGY FUND PLC",
+      "symbol": "LVEF.N0000",
+      "yfinance_symbol": "LVEF-N0000.CM",
+      "price": 7.1,
+      "market_cap": 5441107265.6,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MADULSIMA  PLANTATIONS  PLC",
+      "symbol": "MADU.N0000",
+      "yfinance_symbol": "MADU-N0000.CM",
+      "price": 10.1,
+      "market_cap": 1711961079.7,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MAHARAJA FOODS PLC",
+      "symbol": "MFPE.N0000",
+      "yfinance_symbol": "MFPE-N0000.CM",
+      "price": 17.5,
+      "market_cap": 2406250000.0,
+      "status": 5,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MAHAWELI COCONUT PLANTATIONS PLC",
+      "symbol": "MCPL.N0000",
+      "yfinance_symbol": "MCPL-N0000.CM",
+      "price": 49.0,
+      "market_cap": 1714809635.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MAHAWELI REACH HOTELS PLC",
+      "symbol": "MRH.N0000",
+      "yfinance_symbol": "MRH-N0000.CM",
+      "price": 17.9,
+      "market_cap": 842489401.3,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MALWATTE VALLEY PLANTATION PLC",
+      "symbol": "MAL.N0000",
+      "yfinance_symbol": "MAL-N0000.CM",
+      "price": 58.0,
+      "market_cap": 11761955198.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MARAWILA  RESORTS  PLC",
+      "symbol": "MARA.N0000",
+      "yfinance_symbol": "MARA-N0000.CM",
+      "price": 5.7,
+      "market_cap": 2005963317.3,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MASKELIYA PLANTATIONS PLC",
+      "symbol": "MASK.N0000",
+      "yfinance_symbol": "MASK-N0000.CM",
+      "price": 67.5,
+      "market_cap": 3641860507.5,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MELSTACORP PLC",
+      "symbol": "MELS.N0000",
+      "yfinance_symbol": "MELS-N0000.CM",
+      "price": 191.25,
+      "market_cap": 222882190020.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MERCANTILE INVESTMENTS AND FINANCE PLC",
+      "symbol": "MERC.N0000",
+      "yfinance_symbol": "MERC-N0000.CM",
+      "price": 26.7,
+      "market_cap": 16943820000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MERCANTILE SHIPPING COMPANY PLC",
+      "symbol": "MSL.N0000",
+      "yfinance_symbol": "MSL-N0000.CM",
+      "price": 203.0,
+      "market_cap": 577532970.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MERCHANT BANK OF SRI LANKA & FINANCE PLC",
+      "symbol": "MBSL.N0000",
+      "yfinance_symbol": "MBSL-N0000.CM",
+      "price": 12.7,
+      "market_cap": 6661653389.9,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MILLENNIUM HOUSING DEVELOPERS PLC",
+      "symbol": "MHDL.N0000",
+      "yfinance_symbol": "MHDL-N0000.CM",
+      "price": 8.7,
+      "market_cap": 1171727484.0,
+      "status": 1,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MULLER & PHIPPS (CEYLON) PLC",
+      "symbol": "MULL.N0000",
+      "yfinance_symbol": "MULL-N0000.CM",
+      "price": 2.1,
+      "market_cap": 594300000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "MYLAND DEVELOPMENTS PLC",
+      "symbol": "MDL.N0000",
+      "yfinance_symbol": "MDL-N0000.CM",
+      "price": 20.7,
+      "market_cap": 750375000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "NAMUNUKULA PLANTATIONS PLC",
+      "symbol": "NAMU.N0000",
+      "yfinance_symbol": "NAMU-N0000.CM",
+      "price": 68.6,
+      "market_cap": 16292500000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "NATIONAL DEVELOPMENT BANK PLC",
+      "symbol": "NDB.N0000",
+      "yfinance_symbol": "NDB-N0000.CM",
+      "price": 112.0,
+      "market_cap": 48406157408.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "NATIONS TRUST BANK PLC",
+      "symbol": "NTB.X0000",
+      "yfinance_symbol": "NTB.X0000.CM",
+      "price": 400.0,
+      "market_cap": 17974087200.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "NATIONS TRUST BANK PLC",
+      "symbol": "NTB.N0000",
+      "yfinance_symbol": "NTB-N0000.CM",
+      "price": 315.5,
+      "market_cap": 91019083394.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "NAWALOKA HOSPITALS PLC",
+      "symbol": "NHL.N0000",
+      "yfinance_symbol": "NHL-N0000.CM",
+      "price": 14.4,
+      "market_cap": 20296880582.4,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ODEL PLC",
+      "symbol": "ODEL.N0000",
+      "yfinance_symbol": "ODEL-N0000.CM",
+      "price": 12.1,
+      "market_cap": 6514276201.4,
+      "status": 1,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "OFFICE EQUIPMENT PLC",
+      "symbol": "OFEQ.N0000",
+      "yfinance_symbol": "OFEQ-N0000.CM",
+      "price": 517.25,
+      "market_cap": 431158910.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ON'ALLY HOLDINGS PLC",
+      "symbol": "ONAL.N0000",
+      "yfinance_symbol": "ONAL-N0000.CM",
+      "price": 52.0,
+      "market_cap": 4836160524.0,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "OVERSEAS REALTY (CEYLON) PLC",
+      "symbol": "OSEA.N0000",
+      "yfinance_symbol": "OSEA-N0000.CM",
+      "price": 49.9,
+      "market_cap": 62027176141.8,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PALM GARDEN HOTELS PLC",
+      "symbol": "PALM.N0000",
+      "yfinance_symbol": "PALM-N0000.CM",
+      "price": 54.0,
+      "market_cap": 25700598000.0,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PAN ASIA BANKING CORPORATION PLC",
+      "symbol": "PABC.N0000",
+      "yfinance_symbol": "PABC-N0000.CM",
+      "price": 55.0,
+      "market_cap": 24340889595.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PANASIAN POWER PLC",
+      "symbol": "PAP.N0000",
+      "yfinance_symbol": "PAP-N0000.CM",
+      "price": 17.0,
+      "market_cap": 10625000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PARAGON CEYLON PLC",
+      "symbol": "PARA.N0000",
+      "yfinance_symbol": "PARA-N0000.CM",
+      "price": 680.0,
+      "market_cap": 680190400.0,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PEGASUS HOTELS OF CEYLON PLC",
+      "symbol": "PEG.N0000",
+      "yfinance_symbol": "PEG-N0000.CM",
+      "price": 39.1,
+      "market_cap": 1650429377.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PEOPLE'S INSURANCE PLC",
+      "symbol": "PINS.N0000",
+      "yfinance_symbol": "PINS-N0000.CM",
+      "price": 28.8,
+      "market_cap": 5864615366.4,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PEOPLE'S LEASING & FINANCE PLC",
+      "symbol": "PLC.N0000",
+      "yfinance_symbol": "PLC-N0000.CM",
+      "price": 21.9,
+      "market_cap": 48396092687.4,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PGP GLASS CEYLON PLC",
+      "symbol": "GLAS.N0000",
+      "yfinance_symbol": "GLAS-N0000.CM",
+      "price": 58.1,
+      "market_cap": 55200001248.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PMF FINANCE PLC",
+      "symbol": "PMB.N0000",
+      "yfinance_symbol": "PMB-N0000.CM",
+      "price": 12.0,
+      "market_cap": 4863621000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PRIME LANDS RESIDENCIES PLC",
+      "symbol": "PLR.N0000",
+      "yfinance_symbol": "PLR-N0000.CM",
+      "price": 43.2,
+      "market_cap": 40500000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "PRINTCARE PLC",
+      "symbol": "CARE.N0000",
+      "yfinance_symbol": "CARE-N0000.CM",
+      "price": 40.3,
+      "market_cap": 3464456801.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "R I L PROPERTY PLC",
+      "symbol": "RIL.N0000",
+      "yfinance_symbol": "RIL-N0000.CM",
+      "price": 25.9,
+      "market_cap": 20720000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RADIANT GEMS INTERNATIONAL PLC",
+      "symbol": "RGEM.N0000",
+      "yfinance_symbol": "RGEM-N0000.CM",
+      "price": 150.75,
+      "market_cap": 361800000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RAIGAM WAYAMBA SALTERNS PLC",
+      "symbol": "RWSL.N0000",
+      "yfinance_symbol": "RWSL-N0000.CM",
+      "price": 19.5,
+      "market_cap": 5503042740.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RAMBODA FALLS PLC",
+      "symbol": "RFL.N0000",
+      "yfinance_symbol": "RFL-N0000.CM",
+      "price": 25.0,
+      "market_cap": 500000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RENUKA AGRI FOODS PLC",
+      "symbol": "RAL.N0000",
+      "yfinance_symbol": "RAL-N0000.CM",
+      "price": 11.8,
+      "market_cap": 9426185799.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RENUKA CITY HOTELS PLC.",
+      "symbol": "RENU.N0000",
+      "yfinance_symbol": "RENU-N0000.CM",
+      "price": 893.25,
+      "market_cap": 6252750000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RENUKA FOODS PLC",
+      "symbol": "COCO.N0000",
+      "yfinance_symbol": "COCO-N0000.CM",
+      "price": 25.5,
+      "market_cap": 9180271167.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RENUKA FOODS PLC",
+      "symbol": "COCO.X0000",
+      "yfinance_symbol": "COCO.X0000.CM",
+      "price": 22.0,
+      "market_cap": 321499200.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RENUKA HOLDINGS PLC",
+      "symbol": "RHL.X0000",
+      "yfinance_symbol": "RHL.X0000.CM",
+      "price": 36.4,
+      "market_cap": 880942571.6,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RENUKA HOLDINGS PLC",
+      "symbol": "RHL.N0000",
+      "yfinance_symbol": "RHL-N0000.CM",
+      "price": 48.0,
+      "market_cap": 7943437008.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RENUKA HOTELS PLC",
+      "symbol": "RCH.N0000",
+      "yfinance_symbol": "RCH-N0000.CM",
+      "price": 220.0,
+      "market_cap": 8865456600.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RESUS ENERGY PLC",
+      "symbol": "HPWR.N0000",
+      "yfinance_symbol": "HPWR-N0000.CM",
+      "price": 9.1,
+      "market_cap": 3921409628.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RICHARD PIERIS AND COMPANY PLC",
+      "symbol": "RICH.N0000",
+      "yfinance_symbol": "RICH-N0000.CM",
+      "price": 29.7,
+      "market_cap": 60440636767.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "RICHARD PIERIS EXPORTS PLC",
+      "symbol": "REXP.N0000",
+      "yfinance_symbol": "REXP-N0000.CM",
+      "price": 350.5,
+      "market_cap": 3912892622.5,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ROYAL CERAMICS LANKA PLC",
+      "symbol": "RCL.N0000",
+      "yfinance_symbol": "RCL-N0000.CM",
+      "price": 44.4,
+      "market_cap": 49190486496.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "ROYAL PALMS BEACH HOTELS PLC",
+      "symbol": "RPBH.N0000",
+      "yfinance_symbol": "RPBH-N0000.CM",
+      "price": 50.0,
+      "market_cap": 2500000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SAMPATH BANK PLC",
+      "symbol": "SAMP.N0000",
+      "yfinance_symbol": "SAMP-N0000.CM",
+      "price": 142.0,
+      "market_cap": 166523507920.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SAMSON INTERNATIONAL PLC",
+      "symbol": "SIL.N0000",
+      "yfinance_symbol": "SIL-N0000.CM",
+      "price": 547.75,
+      "market_cap": 2318500315.25,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SANASA DEVELOPMENT BANK PLC",
+      "symbol": "SDB.N0000",
+      "yfinance_symbol": "SDB-N0000.CM",
+      "price": 53.4,
+      "market_cap": 8766490779.6,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SARVODAYA DEVELOPMENT FINANCE PLC",
+      "symbol": "SDF.N0000",
+      "yfinance_symbol": "SDF-N0000.CM",
+      "price": 40.0,
+      "market_cap": 5983842080.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SATHOSA MOTORS PLC",
+      "symbol": "SMOT.N0000",
+      "yfinance_symbol": "SMOT-N0000.CM",
+      "price": 1253.5,
+      "market_cap": 7563145177.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SENKADAGALA FINANCE COMPANY PLC",
+      "symbol": "SFCL.N0000",
+      "yfinance_symbol": "SFCL-N0000.CM",
+      "price": 400.75,
+      "market_cap": 36305475769.5,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SERENDIB HOTELS PLC",
+      "symbol": "SHOT.X0000",
+      "yfinance_symbol": "SHOT.X0000.CM",
+      "price": 13.4,
+      "market_cap": 1930192601.6,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SERENDIB HOTELS PLC",
+      "symbol": "SHOT.N0000",
+      "yfinance_symbol": "SHOT-N0000.CM",
+      "price": 17.0,
+      "market_cap": 5135002184.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SERENDIB LAND PLC",
+      "symbol": "SLND.N0000",
+      "yfinance_symbol": "SLND-N0000.CM",
+      "price": 3499.5,
+      "market_cap": 1395971547.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SEYLAN BANK PLC",
+      "symbol": "SEYB.N0000",
+      "yfinance_symbol": "SEYB-N0000.CM",
+      "price": 102.25,
+      "market_cap": 31210476808.25,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SEYLAN BANK PLC",
+      "symbol": "SEYB.X0000",
+      "yfinance_symbol": "SEYB.X0000.CM",
+      "price": 68.8,
+      "market_cap": 22732235382.4,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SEYLAN DEVELOPMENTS PLC",
+      "symbol": "CSD.N0000",
+      "yfinance_symbol": "CSD-N0000.CM",
+      "price": 26.8,
+      "market_cap": 3743646386.4,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SIERRA CABLES PLC",
+      "symbol": "SIRA.N0000",
+      "yfinance_symbol": "SIRA-N0000.CM",
+      "price": 27.8,
+      "market_cap": 14942845554.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SIGIRIYA VILLAGE HOTELS PLC",
+      "symbol": "SIGV.N0000",
+      "yfinance_symbol": "SIGV-N0000.CM",
+      "price": 13.5,
+      "market_cap": 1215000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SINGER (SRI LANKA) PLC",
+      "symbol": "SINS.N0000",
+      "yfinance_symbol": "SINS-N0000.CM",
+      "price": 75.1,
+      "market_cap": 87688105191.2,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SINGER FINANCE LANKA PLC",
+      "symbol": "SFIN.N0000",
+      "yfinance_symbol": "SFIN-N0000.CM",
+      "price": 51.7,
+      "market_cap": 14364940800.1,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SINGHE HOSPITALS PLC",
+      "symbol": "SINH.N0000",
+      "yfinance_symbol": "SINH-N0000.CM",
+      "price": 24.4,
+      "market_cap": 10523741838.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SMB FINANCE PLC",
+      "symbol": "SEMB.N0000",
+      "yfinance_symbol": "SEMB-N0000.CM",
+      "price": 1.0,
+      "market_cap": 6470375048.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SMB FINANCE PLC",
+      "symbol": "SEMB.X0000",
+      "yfinance_symbol": "SEMB.X0000.CM",
+      "price": 0.3,
+      "market_cap": 924481113.6,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SOFTLOGIC CAPITAL PLC",
+      "symbol": "SCAP.N0000",
+      "yfinance_symbol": "SCAP-N0000.CM",
+      "price": 12.8,
+      "market_cap": 12507996160.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SOFTLOGIC FINANCE PLC",
+      "symbol": "CRL.N0000",
+      "yfinance_symbol": "CRL-N0000.CM",
+      "price": 6.1,
+      "market_cap": 5871696465.1,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SOFTLOGIC HOLDINGS PLC",
+      "symbol": "SHL.N0000",
+      "yfinance_symbol": "SHL-N0000.CM",
+      "price": 10.4,
+      "market_cap": 14510682981.6,
+      "status": 1,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SOFTLOGIC LIFE INSURANCE PLC",
+      "symbol": "AAIC.N0000",
+      "yfinance_symbol": "AAIC-N0000.CM",
+      "price": 89.5,
+      "market_cap": 28318359375.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SRI LANKA TELECOM PLC",
+      "symbol": "SLTL.N0000",
+      "yfinance_symbol": "SLTL-N0000.CM",
+      "price": 87.0,
+      "market_cap": 157022820000.0,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SUNSHINE HOLDINGS PLC",
+      "symbol": "SUN.N0000",
+      "yfinance_symbol": "SUN-N0000.CM",
+      "price": 31.3,
+      "market_cap": 61595098350.8,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SWADESHI INDUSTRIAL WORKS  PLC",
+      "symbol": "SWAD.N0000",
+      "yfinance_symbol": "SWAD-N0000.CM",
+      "price": 15103.25,
+      "market_cap": 2255413632.25,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "SWISSTEK (CEYLON) PLC",
+      "symbol": "PARQ.N0000",
+      "yfinance_symbol": "PARQ-N0000.CM",
+      "price": 72.1,
+      "market_cap": 9867606000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "TAL LANKA HOTELS PLC",
+      "symbol": "TAJ.N0000",
+      "yfinance_symbol": "TAJ-N0000.CM",
+      "price": 32.4,
+      "market_cap": 5568458983.2,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "TALAWAKELLE TEA ESTATES PLC",
+      "symbol": "TPL.N0000",
+      "yfinance_symbol": "TPL-N0000.CM",
+      "price": 149.5,
+      "market_cap": 7101250000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "TEA SMALLHOLDER FACTORIES PLC",
+      "symbol": "TSML.N0000",
+      "yfinance_symbol": "TSML-N0000.CM",
+      "price": 37.5,
+      "market_cap": 1125000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "TEEJAY LANKA PLC",
+      "symbol": "TJL.N0000",
+      "yfinance_symbol": "TJL-N0000.CM",
+      "price": 32.5,
+      "market_cap": 23447376485.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "TESS AGRO PLC",
+      "symbol": "TESS.N0000",
+      "yfinance_symbol": "TESS-N0000.CM",
+      "price": 2.0,
+      "market_cap": 1354126098.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "TESS AGRO PLC",
+      "symbol": "TESS.X0000",
+      "yfinance_symbol": "TESS.X0000.CM",
+      "price": 1.4,
+      "market_cap": 93333333.8,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "THE AUTODROME PLC",
+      "symbol": "AUTO.N0000",
+      "yfinance_symbol": "AUTO-N0000.CM",
+      "price": 325.75,
+      "market_cap": 3909000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "THE COLOMBO FORT LAND AND BUILDING PLC",
+      "symbol": "CFLB.N0000",
+      "yfinance_symbol": "CFLB-N0000.CM",
+      "price": 65.9,
+      "market_cap": 15816000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "THE KANDY HOTELS COMPANY (1938) PLC",
+      "symbol": "KHC.N0000",
+      "yfinance_symbol": "KHC-N0000.CM",
+      "price": 14.1,
+      "market_cap": 10635760467.3,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "THE KINGSBURY PLC",
+      "symbol": "SERV.N0000",
+      "yfinance_symbol": "SERV-N0000.CM",
+      "price": 14.7,
+      "market_cap": 7114800000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "THE LANKA HOSPITALS CORPORATION PLC",
+      "symbol": "LHCL.N0000",
+      "yfinance_symbol": "LHCL-N0000.CM",
+      "price": 123.0,
+      "market_cap": 27519056787.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "THE  LIGHTHOUSE  HOTEL  PLC",
+      "symbol": "LHL.N0000",
+      "yfinance_symbol": "LHL-N0000.CM",
+      "price": 71.5,
+      "market_cap": 3289000000.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "THE NUWARA ELIYA HOTELS COMPANY PLC",
+      "symbol": "NEH.N0000",
+      "yfinance_symbol": "NEH-N0000.CM",
+      "price": 4297.25,
+      "market_cap": 9393960390.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "THREE ACRE FARMS PLC",
+      "symbol": "TAFL.N0000",
+      "yfinance_symbol": "TAFL-N0000.CM",
+      "price": 611.0,
+      "market_cap": 14385995000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "TOKYO CEMENT COMPANY (LANKA) PLC",
+      "symbol": "TKYO.N0000",
+      "yfinance_symbol": "TKYO-N0000.CM",
+      "price": 89.0,
+      "market_cap": 26168670000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "TOKYO CEMENT COMPANY (LANKA) PLC",
+      "symbol": "TKYO.X0000",
+      "yfinance_symbol": "TKYO.X0000.CM",
+      "price": 67.7,
+      "market_cap": 9952915500.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "TRANS ASIA HOTELS PLC",
+      "symbol": "TRAN.N0000",
+      "yfinance_symbol": "TRAN-N0000.CM",
+      "price": 47.2,
+      "market_cap": 9440000000.0,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "UB FINANCE PLC",
+      "symbol": "UBF.N0000",
+      "yfinance_symbol": "UBF-N0000.CM",
+      "price": 2.4,
+      "market_cap": 7628364880.8,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "UDAPUSSELLAWA  PLANTATIONS PLC",
+      "symbol": "UDPL.N0000",
+      "yfinance_symbol": "UDPL-N0000.CM",
+      "price": 150.0,
+      "market_cap": 2909827500.0,
+      "status": 3,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "UNION ASSURANCE PLC",
+      "symbol": "UAL.N0000",
+      "yfinance_symbol": "UAL-N0000.CM",
+      "price": 72.5,
+      "market_cap": 42723214700.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "UNION BANK OF COLOMBO PLC",
+      "symbol": "UBC.N0000",
+      "yfinance_symbol": "UBC-N0000.CM",
+      "price": 12.5,
+      "market_cap": 13544479225.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "UNION CHEMICALS LANKA PLC",
+      "symbol": "UCAR.N0000",
+      "yfinance_symbol": "UCAR-N0000.CM",
+      "price": 2707.5,
+      "market_cap": 4061250000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "UNITED MOTORS LANKA PLC",
+      "symbol": "UML.N0000",
+      "yfinance_symbol": "UML-N0000.CM",
+      "price": 28.2,
+      "market_cap": 28453976532.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "VALLIBEL FINANCE PLC",
+      "symbol": "VFIN.N0000",
+      "yfinance_symbol": "VFIN-N0000.CM",
+      "price": 95.5,
+      "market_cap": 25296524662.5,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "VALLIBEL ONE PLC",
+      "symbol": "VONE.N0000",
+      "yfinance_symbol": "VONE-N0000.CM",
+      "price": 94.9,
+      "market_cap": 108083094615.6,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "VALLIBEL POWER ERATHNA PLC",
+      "symbol": "VPEL.N0000",
+      "yfinance_symbol": "VPEL-N0000.CM",
+      "price": 15.4,
+      "market_cap": 11505489857.4,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "VIDULLANKA PLC",
+      "symbol": "VLL.X0000",
+      "yfinance_symbol": "VLL.X0000.CM",
+      "price": 17.3,
+      "market_cap": 1420564847.5,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "VIDULLANKA PLC",
+      "symbol": "VLL.N0000",
+      "yfinance_symbol": "VLL-N0000.CM",
+      "price": 22.3,
+      "market_cap": 21266848983.4,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "WASKADUWA BEACH RESORT PLC",
+      "symbol": "CITW.N0000",
+      "yfinance_symbol": "CITW-N0000.CM",
+      "price": 1.7,
+      "market_cap": 1592362779.6,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "WATAWALA  PLANTATIONS  PLC",
+      "symbol": "WATA.N0000",
+      "yfinance_symbol": "WATA-N0000.CM",
+      "price": 44.4,
+      "market_cap": 45134516526.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "WEALTHTRUST SECURITIES PLC",
+      "symbol": "WLTH.N0000",
+      "yfinance_symbol": "WLTH-N0000.CM",
+      "price": 13.0,
+      "market_cap": 15925688207.0,
+      "status": 2,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "WINDFORCE PLC",
+      "symbol": "WIND.N0000",
+      "yfinance_symbol": "WIND-N0000.CM",
+      "price": 40.9,
+      "market_cap": 55403912560.1,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    },
+    {
+      "name": "YORK ARCADE HOLDINGS PLC",
+      "symbol": "YORK.N0000",
+      "yfinance_symbol": "YORK-N0000.CM",
+      "price": 15.1,
+      "market_cap": 2265000000.0,
+      "status": 0,
+      "sector": null,
+      "sector_id": null
+    }
+  ],
+  "sectors": {
+    "223": "Energy",
+    "224": "Materials",
+    "225": "Capital Goods",
+    "226": "Commercial & Professional Services",
+    "227": "Transportation",
+    "228": "Automobiles & Components",
+    "229": "Consumer Durables & Apparel",
+    "230": "Consumer Services",
+    "232": "Retailing",
+    "233": "Food & Staples Retailing",
+    "234": "Food, Beverage & Tobacco",
+    "235": "Household & Personal Products",
+    "236": "Health Care Equipment & Services",
+    "238": "Banks",
+    "239": "Diversified Financials",
+    "240": "Insurance",
+    "241": "Software & Services",
+    "244": "Telecommunication Services",
+    "245": "Utilities",
+    "246": "Real Estate Management&Development",
+    "1": "ALL SHARE PRICE INDEX",
+    "40": "S&P SL20"
+  },
+  "count": 284
+}
